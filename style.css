@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --ink: #0a0e13;              /* Fondo de página oscuro */
+  --surface: #111720;          /* Fondo de la tarjeta */
+  --card: #171f2c;             /* Fondo de los inputs */
+  --border: #283344;           /* Bordes */
+  
+  --text: #f0f4f8;             /* Texto blanco */
+  --text-muted: #8b98a8;       /* Texto secundario */
+  
+  --gold: #c9a24d;             /* Dorado corporativo */
+  --gold-hover: #dfba69;       /* Dorado brillante */
+  --gold-soft: rgba(201, 162, 77, 0.16);
+  --gold-border: rgba(201, 162, 77, 0.45);
+  
+  --danger: #d9534f;
+  --danger-bg: rgba(217, 83, 79, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.center-wrap {
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 32px 28px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(201, 162, 77, 0.1);
+}
+
+/* MARCA Y LOGO CENTRADO */
+.brand-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.brand-logo-large {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 22px rgba(201, 162, 77, 0.35);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.brand-logo-large:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 28px rgba(201, 162, 77, 0.5);
+}
+
+.brand-text-centered h1 {
+  margin: 0;
+  font-size: 1.28rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.brand-text-centered p {
+  margin: 4px 0 0;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+/* CAMPOS DE TEXTO */
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+}
+
+.input-wrap:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+
+.input-wrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 12px 4px;
+  min-width: 0;
+}
+
+.input-wrap input::placeholder {
+  color: #4b5869;
+}
+
+/* MENSAJES DE ALERTA */
+.error-box {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+  color: #ff8582;
+  font-size: 0.8rem;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.success-box {
+  background: var(--gold-soft);
+  border: 1px solid var(--gold);
+  color: var(--gold-hover);
+  font-size: 0.8rem;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* BOTÓN DORADO */
+.submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #c9a24d 0%, #e0bd70 100%);
+  color: #0d0b06;
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(201, 162, 77, 0.28);
+}
+
+.submit-btn:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(201, 162, 77, 0.45);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
+
+/* ENLACES Y PIE */
+.link {
+  font-size: 0.82rem;
+  color: var(--gold-hover);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.link:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.footnote {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 22px 0 0;
+}
