@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
             $msgType = "danger";
         }
     } else {
-        $msg = "Por favor completa los campos requeridos.";
+        $msg = "Por favor completa los campos obligatorios.";
         $msgType = "danger";
     }
 }
@@ -50,14 +50,14 @@ try {
 }
 
 // TOTALES DINÁMICOS
-$total_frauds = count($recent_reports) > 0 ? count($recent_reports) : 6;
+$total_frauds = count($recent_reports) > 0 ? count($recent_reports) : 7;
 try {
     $total_amount_query = $pdo->query("SELECT SUM(amount_affected) as total, SUM(amount_recovered) as rec FROM fraud_reports")->fetch();
-    $total_amount_affected = $total_amount_query['total'] ?? 3480950;
-    $total_amount_recovered = $total_amount_query['rec'] ?? 1106942;
+    $total_amount_affected = $total_amount_query['total'] ?? 242200;
+    $total_amount_recovered = $total_amount_query['rec'] ?? 44200;
 } catch (Exception $e) {
-    $total_amount_affected = 3480950;
-    $total_amount_recovered = 1106942;
+    $total_amount_affected = 242200;
+    $total_amount_recovered = 44200;
 }
 ?>
 <!DOCTYPE html>
@@ -419,7 +419,7 @@ try {
         📞 Análisis Call Center & Motivos
       </button>
       <button class="tab-btn" id="btn-tab-fraud" onclick="switchTab('fraud')">
-        🛡️ Análisis de Fraudes & Víctimas
+        🛡️ Análisis de Fraudes & Visión Anual
       </button>
     </nav>
 
@@ -800,101 +800,244 @@ try {
     </div>
 
     <!-- ========================================================
-         PESTAÑA 3: ANÁLISIS DETALLADO DE FRAUDES Y VÍCTIMAS
+         PESTAÑA 3: ANÁLISIS FORENSE DE FRAUDES & VISIÓN ANUAL
          ======================================================== -->
     <div id="tab-fraud" class="tab-content">
       
       <div class="dash-header">
         <div>
-          <h1>Análisis Forense y Estadístico de Fraudes</h1>
-          <p>Desglose de montos económicos afectados, canales de ataque y perfiles de víctimas.</p>
+          <h1>Análisis Forense de Fraudes — Visión Anual Consolidada</h1>
+          <p>Consolidación estadística de los 12 meses del año: estacionalidad, montos afectados, contención y perfiles de víctimas.</p>
         </div>
         <button class="btn-primary" onclick="openModal()">+ Registrar Caso</button>
       </div>
 
-      <!-- ALERTA DE AMENAZA EMERGENTE -->
+      <!-- ALERTA DE AMENAZA Y ESTACIONALIDAD -->
       <div class="alert-box-danger">
         <div>
-          <h4>⚠️ Alerta de Vector Emergente: Phishing por Falso Ejecutivo</h4>
-          <p>Se registra un incremento del <strong>+41% en estafas vía WhatsApp</strong> donde suplantan ejecutivos de cuenta para solicitar códigos OTP y transferencias.</p>
+          <h4>📊 Análisis de Estacionalidad Anual de Fraudes</h4>
+          <p>Los meses con mayor incidencia histórica son <strong>Noviembre (Buen Fin: $1.92M)</strong> y <strong>Diciembre (Aguinaldos/Fiestas: $2.15M)</strong>, seguidos por <strong>Mayo (Hot Sale: $1.65M)</strong>. La tasa anual promedio de recuperación efectiva se mantiene en <strong>31.8%</strong>.</p>
         </div>
-        <span class="status-badge alert">Prioridad Alta</span>
+        <span class="status-badge alert">Visión Consolidada 2026</span>
       </div>
 
-      <!-- 4 KPIs DE FRAUDE Y VÍCTIMAS -->
+      <!-- 4 KPIs ANUALES CONSOLIDADOS -->
       <section class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-title">Monto Total Defraudado</div>
-          <div class="kpi-value danger">$<?= number_format($total_amount_affected, 2) ?></div>
-          <div class="kpi-footer warning">Promedio: $2,795 / caso</div>
-          <span class="kpi-sub">Mayor caso: $145,000 MXN</span>
+          <div class="kpi-title">Casos de Fraude Anuales</div>
+          <div class="kpi-value gold">1,428</div>
+          <div class="kpi-footer warning">Promedio: 119 casos / mes</div>
+          <span class="kpi-sub">Total casos consolidados</span>
         </div>
 
         <div class="kpi-card">
-          <div class="kpi-title">Monto Recuperado / Bloqueado</div>
-          <div class="kpi-value positive" style="color:var(--success);">$<?= number_format($total_amount_recovered, 2) ?></div>
-          <div class="kpi-footer positive">31.8% tasa de recuperación</div>
-          <span class="kpi-sub">Bloqueo en los primeros 15 min</span>
+          <div class="kpi-title">Monto Anual Defraudado</div>
+          <div class="kpi-value danger">$14,850,000 <small style="font-size:0.5em; color:var(--text-muted)">MXN</small></div>
+          <div class="kpi-footer">Ticket Promedio: $10,400 / caso</div>
+          <span class="kpi-sub">Pérdida monetaria acumulada</span>
         </div>
 
         <div class="kpi-card">
-          <div class="kpi-title">Grupo Etario Más Vulnerable</div>
-          <div class="kpi-value gold" style="font-size:1.45rem;">30 - 49 Años</div>
-          <div class="kpi-footer">46% del total de víctimas</div>
-          <span class="kpi-sub">Seguido por 50-64 años (27%)</span>
+          <div class="kpi-title">Monto Anual Recuperado / Contenido</div>
+          <div class="kpi-value positive" style="color:var(--success);">$4,722,300 <small style="font-size:0.5em; color:var(--text-muted)">MXN</small></div>
+          <div class="kpi-footer positive">31.8% tasa anual de contención</div>
+          <span class="kpi-sub">Bloqueo preventivo en < 15 min</span>
         </div>
 
         <div class="kpi-card">
-          <div class="kpi-title">Canal de Ataque Principal</div>
-          <div class="kpi-value" style="font-size:1.35rem; color:var(--blue);">Llamada Celular</div>
-          <div class="kpi-footer warning">52% de los casos iniciados</div>
-          <span class="kpi-sub">WhatsApp / SMS: 31%</span>
+          <div class="kpi-title">Vector Crítico Principal</div>
+          <div class="kpi-value" style="font-size:1.35rem; color:var(--blue);">Phishing Móvil</div>
+          <div class="kpi-footer warning">52% llamadas · 31% WhatsApp</div>
+          <span class="kpi-sub">Grupo vulnerable: 30 a 49 años</span>
         </div>
       </section>
 
-      <!-- GRÁFICAS DE FRAUDE FILA 1 -->
+      <!-- GRÁFICAS DE FRAUDE ANUAL FILA 1 -->
       <section class="charts-grid-equal-2">
         <div class="chart-card">
           <div class="chart-header">
-            <h3>Monto Defraudado por Tipo de Fraude (MXN)</h3>
-            <span class="badge-tag">Pérdida Monetaria</span>
+            <h3>Evolución Anual de Casos Registrados (Enero - Diciembre)</h3>
+            <span class="badge-tag">Estacionalidad 12 Meses</span>
           </div>
-          <div class="chart-container">
-            <canvas id="fraudAmountByTypeChart"></canvas>
+          <div class="chart-container" style="height:300px;">
+            <canvas id="fraudYearlyCasesChart"></canvas>
           </div>
         </div>
 
         <div class="chart-card">
           <div class="chart-header">
-            <h3>Canales de Ataque Utilizados</h3>
-            <span class="badge-tag">Vías de Contacto</span>
+            <h3>Balance Financiero Anual: Pérdidas vs. Recuperación ($ MXN)</h3>
+            <span class="badge-tag">Comparativa Mensual</span>
           </div>
-          <div class="chart-container">
-            <canvas id="attackChannelsChart"></canvas>
+          <div class="chart-container" style="height:300px;">
+            <canvas id="fraudYearlyFinanceChart"></canvas>
           </div>
         </div>
       </section>
 
-      <!-- GRÁFICAS DE FRAUDE FILA 2 -->
-      <section class="charts-grid-equal-2">
+      <!-- GRÁFICAS DE FRAUDE ANUAL FILA 2 -->
+      <section class="charts-grid-3">
         <div class="chart-card">
           <div class="chart-header">
-            <h3>Pérdidas Económicas por Estado (Top 5)</h3>
-            <span class="badge-tag">Geografía de Fraude</span>
+            <h3>Pérdidas por Tipo de Fraude (Anual)</h3>
           </div>
           <div class="chart-container">
-            <canvas id="fraudLossesByStateChart"></canvas>
+            <canvas id="fraudYearlyTypesChart"></canvas>
           </div>
         </div>
 
         <div class="chart-card">
           <div class="chart-header">
-            <h3>Evolución Mensual de Pérdidas vs. Recuperación</h3>
-            <span class="badge-tag">Tendencia en $</span>
+            <h3>Canales de Ataque Anuales</h3>
           </div>
           <div class="chart-container">
-            <canvas id="fraudMonthlyLossTrendChart"></canvas>
+            <canvas id="fraudYearlyChannelsChart"></canvas>
           </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Top 5 Estados con Mayor Pérdida Anual</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="fraudYearlyStatesChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- TABLA CONSOLIDADA ANUAL DE LOS 12 MESES -->
+      <section class="table-card">
+        <div class="table-header">
+          <div>
+            <h3>Tabla Consolidada del Desempeño Anual de Fraudes (12 Meses)</h3>
+            <p>Registro histórico consolidado de casos, impacto económico, recuperación y vectores por mes.</p>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th>Casos Registrados</th>
+                <th>Monto Afectado ($ MXN)</th>
+                <th>Monto Recuperado ($ MXN)</th>
+                <th>% Contención</th>
+                <th>Vector Predominante</th>
+                <th>Estatus de Riesgo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Enero</strong></td>
+                <td>95</td>
+                <td class="amount">$920,000</td>
+                <td style="color:var(--success); font-weight:600;">$294,400</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Clonación ATM (Cuesta de Enero)</td>
+                <td><span class="status-badge process">Normal</span></td>
+              </tr>
+              <tr>
+                <td><strong>Febrero</strong></td>
+                <td>88</td>
+                <td class="amount">$860,000</td>
+                <td style="color:var(--success); font-weight:600;">$275,200</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Phishing Falso Ejecutivo</td>
+                <td><span class="status-badge process">Normal</span></td>
+              </tr>
+              <tr>
+                <td><strong>Marzo</strong></td>
+                <td>102</td>
+                <td class="amount">$1,050,000</td>
+                <td style="color:var(--success); font-weight:600;">$336,000</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Suplantación de Créditos</td>
+                <td><span class="status-badge process">Normal</span></td>
+              </tr>
+              <tr>
+                <td><strong>Abril</strong></td>
+                <td>110</td>
+                <td class="amount">$1,180,000</td>
+                <td style="color:var(--success); font-weight:600;">$377,600</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Phishing Falsas Devoluciones SAT</td>
+                <td><span class="status-badge process">Normal</span></td>
+              </tr>
+              <tr>
+                <td><strong>Mayo (Hot Sale)</strong></td>
+                <td>145</td>
+                <td class="amount" style="color:var(--danger);">$1,650,000</td>
+                <td style="color:var(--success); font-weight:600;">$528,000</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Sitios Web Falsos / E-commerce</td>
+                <td><span class="status-badge alert">Pico Alto</span></td>
+              </tr>
+              <tr>
+                <td><strong>Junio</strong></td>
+                <td>98</td>
+                <td class="amount">$980,000</td>
+                <td style="color:var(--success); font-weight:600;">$313,600</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Transferencias SPEI no reconocidas</td>
+                <td><span class="status-badge process">Normal</span></td>
+              </tr>
+              <tr>
+                <td><strong>Julio</strong></td>
+                <td>115</td>
+                <td class="amount">$1,180,000</td>
+                <td style="color:var(--success); font-weight:600;">$377,600</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Fraude Vacacional / Falsas Agencias</td>
+                <td><span class="status-badge process">Normal</span></td>
+              </tr>
+              <tr>
+                <td><strong>Agosto</strong></td>
+                <td>128</td>
+                <td class="amount">$1,320,000</td>
+                <td style="color:var(--success); font-weight:600;">$422,400</td>
+                <td class="mono-gold">32.0%</td>
+                <td>WhatsApp Suplantación Ejecutivo</td>
+                <td><span class="status-badge process">Normal</span></td>
+              </tr>
+              <tr>
+                <td><strong>Septiembre</strong></td>
+                <td>105</td>
+                <td class="amount">$1,090,000</td>
+                <td style="color:var(--success); font-weight:600;">$348,800</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Extorsión Telefónica (Falso Premio)</td>
+                <td><span class="status-badge process">Normal</span></td>
+              </tr>
+              <tr>
+                <td><strong>Octubre</strong></td>
+                <td>118</td>
+                <td class="amount">$1,240,000</td>
+                <td style="color:var(--success); font-weight:600;">$396,800</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Phishing Bancario con OTP</td>
+                <td><span class="status-badge process">Normal</span></td>
+              </tr>
+              <tr>
+                <td><strong>Noviembre (Buen Fin)</strong></td>
+                <td>186</td>
+                <td class="amount" style="color:var(--danger);">$1,920,000</td>
+                <td style="color:var(--success); font-weight:600;">$614,400</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Clonación & Falso Portal de Pago</td>
+                <td><span class="status-badge alert">Pico Crítico</span></td>
+              </tr>
+              <tr>
+                <td><strong>Diciembre (Aguinaldos)</strong></td>
+                <td>198</td>
+                <td class="amount" style="color:var(--danger);">$2,150,000</td>
+                <td style="color:var(--success); font-weight:600;">$688,000</td>
+                <td class="mono-gold">32.0%</td>
+                <td>Extorsión & Phishing Masivo</td>
+                <td><span class="status-badge alert">Pico Máximo</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -1146,8 +1289,6 @@ try {
     // ==========================================
     // GRÁFICOS PESTAÑA 2 (MOTIVOS & CALL CENTER)
     // ==========================================
-    
-    // 1. Gráfico de 10 Motivos de Contacto
     new Chart(document.getElementById('reasonsBarChart'), {
       type: 'bar',
       data: {
@@ -1181,7 +1322,6 @@ try {
       }
     });
 
-    // 2. Gráfico de Duración TMO
     new Chart(document.getElementById('reasonsDurationChart'), {
       type: 'bar',
       data: {
@@ -1208,13 +1348,10 @@ try {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: {
-          y: { ticks: { callback: val => val + ' min' } }
-        }
+        scales: { y: { ticks: { callback: val => val + ' min' } } }
       }
     });
 
-    // 3. Demanda 24 horas
     new Chart(document.getElementById('cc24HoursChart'), {
       type: 'line',
       data: {
@@ -1237,7 +1374,6 @@ try {
       }
     });
 
-    // 4. Franjas del día
     new Chart(document.getElementById('ccDaySlotsChart'), {
       type: 'doughnut',
       data: {
@@ -1256,7 +1392,6 @@ try {
       }
     });
 
-    // 5. Días de la semana
     new Chart(document.getElementById('ccWeekDaysChart'), {
       type: 'bar',
       data: {
@@ -1283,7 +1418,6 @@ try {
       }
     });
 
-    // 6. Geografía %
     new Chart(document.getElementById('ccGeoPercentChart'), {
       type: 'bar',
       data: {
@@ -1305,31 +1439,89 @@ try {
     });
 
     // ==========================================
-    // GRÁFICOS PESTAÑA 3 (ANÁLISIS DE FRAUDE)
+    // GRÁFICOS PESTAÑA 3 (VISIÓN ANUAL CONSOLIDADA)
     // ==========================================
-    new Chart(document.getElementById('fraudAmountByTypeChart'), {
-      type: 'bar',
+    
+    // 1. Curva Anual de 12 Meses (Casos)
+    new Chart(document.getElementById('fraudYearlyCasesChart'), {
+      type: 'line',
       data: {
-        labels: ['Phishing', 'Suplantación', 'Clonación', 'Extorsión', 'Transferencias'],
+        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May (HotSale)', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov (BuenFin)', 'Dic (Navidad)'],
         datasets: [{
-          label: 'Monto ($ MXN)',
-          data: [1420000, 980000, 560000, 320000, 200950],
-          backgroundColor: ['#e06c75', '#c9a24d', '#dfba69', '#4fa3a0', '#61afef'],
-          borderRadius: 6
+          label: 'Casos Registrados',
+          data: [95, 88, 102, 110, 145, 98, 115, 128, 105, 118, 186, 198],
+          borderColor: '#e06c75',
+          backgroundColor: 'rgba(224, 108, 117, 0.15)',
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: ['#c9a24d','#c9a24d','#c9a24d','#c9a24d','#e06c75','#c9a24d','#c9a24d','#c9a24d','#c9a24d','#c9a24d','#e06c75','#e06c75'],
+          pointRadius: 6
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { ticks: { callback: val => '$' + (val/1000) + 'k' } } }
+        scales: {
+          y: { title: { display: true, text: 'Número de Casos' } }
+        }
       }
     });
 
-    new Chart(document.getElementById('attackChannelsChart'), {
+    // 2. Balance Financiero Anual ($ Afectado vs $ Recuperado)
+    new Chart(document.getElementById('fraudYearlyFinanceChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+        datasets: [
+          {
+            label: 'Monto Afectado ($ MXN)',
+            data: [920000, 860000, 1050000, 1180000, 1650000, 980000, 1180000, 1320000, 1090000, 1240000, 1920000, 2150000],
+            backgroundColor: '#e06c75',
+            borderRadius: 4
+          },
+          {
+            label: 'Monto Recuperado ($ MXN)',
+            data: [294400, 275200, 336000, 377600, 528000, 313600, 377600, 422400, 348800, 396800, 614400, 688000],
+            backgroundColor: '#98c379',
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+          y: { ticks: { callback: val => '$' + (val/1000) + 'k' } }
+        }
+      }
+    });
+
+    // 3. Tipologías Anuales
+    new Chart(document.getElementById('fraudYearlyTypesChart'), {
       type: 'doughnut',
       data: {
-        labels: ['📱 Llamada Telefónica (52%)', '💬 WhatsApp / SMS (31%)', '✉️ Correo Falso (17%)'],
+        labels: ['Phishing Bancario ($5.6M)', 'Suplantación ($3.8M)', 'Clonación ($2.6M)', 'Transferencias ($1.8M)', 'Extorsión ($1.0M)'],
+        datasets: [{
+          data: [38, 26, 18, 12, 6],
+          backgroundColor: ['#e06c75', '#c9a24d', '#dfba69', '#4fa3a0', '#61afef'],
+          borderColor: '#0f151d',
+          borderWidth: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } }
+      }
+    });
+
+    // 4. Canales de Ataque Anuales
+    new Chart(document.getElementById('fraudYearlyChannelsChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['📱 Llamada (52%)', '💬 WhatsApp/SMS (31%)', '✉️ Phishing Web (17%)'],
         datasets: [{
           data: [52, 31, 17],
           backgroundColor: ['#61afef', '#98c379', '#c9a24d'],
@@ -1344,14 +1536,15 @@ try {
       }
     });
 
-    new Chart(document.getElementById('fraudLossesByStateChart'), {
+    // 5. Pérdidas por Estado Top 5 Anual
+    new Chart(document.getElementById('fraudYearlyStatesChart'), {
       type: 'bar',
       data: {
-        labels: ['CDMX', 'Edo. Mex', 'Jalisco', 'Nuevo León', 'Puebla'],
+        labels: ['CDMX ($4.8M)', 'Edo. Mex ($3.6M)', 'Jalisco ($2.7M)', 'Nvo. León ($2.1M)', 'Puebla ($1.1M)'],
         datasets: [{
-          label: 'Pérdida Económica ($ MXN)',
-          data: [1250000, 890000, 610000, 480000, 250950],
-          backgroundColor: '#e06c75',
+          label: 'Pérdida Anual ($ MXN)',
+          data: [4820000, 3560000, 2710000, 2140000, 1120000],
+          backgroundColor: '#dfba69',
           borderRadius: 6,
           indexAxis: 'y'
         }]
@@ -1360,38 +1553,9 @@ try {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { x: { ticks: { callback: val => '$' + (val/1000) + 'k' } } }
-      }
-    });
-
-    new Chart(document.getElementById('fraudMonthlyLossTrendChart'), {
-      type: 'line',
-      data: {
-        labels: ['Mes 1 (Junio)', 'Mes 2 (Julio)', 'Mes 3 (Agosto)'],
-        datasets: [
-          {
-            label: 'Monto Afectado',
-            data: [980000, 1180000, 1320950],
-            borderColor: '#e06c75',
-            backgroundColor: 'rgba(224, 108, 117, 0.15)',
-            fill: true,
-            tension: 0.3
-          },
-          {
-            label: 'Monto Recuperado / Bloqueado',
-            data: [280000, 390000, 436942],
-            borderColor: '#98c379',
-            backgroundColor: 'rgba(152, 195, 121, 0.15)',
-            fill: true,
-            tension: 0.3
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'top' } },
-        scales: { y: { ticks: { callback: val => '$' + (val/1000) + 'k' } } }
+        scales: {
+          x: { ticks: { callback: val => '$' + (val/1000000) + 'M' } }
+        }
       }
     });
   </script>
