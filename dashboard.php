@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
             $msgType = "danger";
         }
     } else {
-        $msg = "Por favor completa los campos obligatorios.";
+        $msg = "Por favor completa los campos requeridos.";
         $msgType = "danger";
     }
 }
@@ -119,24 +119,10 @@ try {
       z-index: 100;
     }
 
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .nav-logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 1.5px solid var(--gold);
-      flex-shrink: 0;
-    }
-
+    .nav-brand { display: flex; align-items: center; gap: 14px; }
+    .nav-logo { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--gold); flex-shrink: 0; }
     .nav-brand h2 { margin: 0; font-size: 1.1rem; color: #ffffff; }
     .nav-brand span { font-size: 0.78rem; color: var(--text-muted); }
-
     .nav-actions { display: flex; align-items: center; gap: 16px; }
 
     .user-badge {
@@ -150,14 +136,7 @@ try {
       font-size: 0.82rem;
       color: var(--text);
     }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      background: #98c379;
-      border-radius: 50%;
-      box-shadow: 0 0 6px #98c379;
-    }
+    .status-dot { width: 8px; height: 8px; background: #98c379; border-radius: 50%; box-shadow: 0 0 6px #98c379; }
 
     .btn-logout {
       background: transparent;
@@ -173,11 +152,7 @@ try {
     .btn-logout:hover { background: var(--danger-soft); border-color: var(--danger); }
 
     /* CONTENEDOR */
-    .dashboard-container {
-      max-width: 1360px;
-      margin: 0 auto;
-      padding: 24px 24px 60px;
-    }
+    .dashboard-container { max-width: 1360px; margin: 0 auto; padding: 24px 24px 60px; }
 
     .alert-banner {
       padding: 12px 18px;
@@ -193,15 +168,7 @@ try {
     .alert-banner.danger { background: var(--danger-soft); border: 1px solid var(--danger); color: #ff8582; }
 
     /* PESTAÑAS */
-    .tabs-nav {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 24px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-      flex-wrap: wrap;
-    }
-
+    .tabs-nav { display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; }
     .tab-btn {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -224,30 +191,15 @@ try {
       color: var(--gold-hover);
       box-shadow: 0 0 12px rgba(201, 162, 77, 0.2);
     }
-
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    .dash-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
+    .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
     .dash-header h1 { margin: 0 0 4px; font-size: 1.45rem; color: #ffffff; }
     .dash-header p { margin: 0; font-size: 0.86rem; color: var(--text-muted); }
 
     /* KPI GRID */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 18px;
-      margin-bottom: 26px;
-    }
-
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 26px; }
     .kpi-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -259,13 +211,11 @@ try {
     }
     .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--border); }
     .kpi-card:hover::before { background: var(--gold); }
-
     .kpi-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; }
     .kpi-value { font-size: 1.75rem; font-weight: 700; color: #ffffff; margin-bottom: 6px; }
     .kpi-value.gold { color: var(--gold-hover); }
     .kpi-value.danger { color: var(--danger); }
     .kpi-value.teal { color: var(--teal); }
-
     .kpi-footer { font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
     .kpi-footer.positive { color: var(--success); }
     .kpi-footer.warning { color: var(--gold); }
@@ -284,20 +234,10 @@ try {
       padding: 22px 20px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.3);
     }
-
     .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
     .chart-header h3 { margin: 0; font-size: 0.98rem; font-weight: 600; color: #ffffff; }
-
-    .badge-tag {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 0.72rem;
-      color: var(--gold-hover);
-    }
+    .badge-tag { background: var(--card); border: 1px solid var(--border); padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; color: var(--gold-hover); }
     .badge-tag.critical { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
-
     .chart-container { position: relative; height: 260px; width: 100%; }
 
     .alert-box-extra {
@@ -336,16 +276,9 @@ try {
       border-radius: 14px;
       padding: 24px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      margin-bottom: 24px;
     }
-
-    .table-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 14px;
-    }
+    .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 14px; }
     .table-header h3 { margin: 0 0 4px; font-size: 1.1rem; color: #ffffff; }
     .table-header p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
 
@@ -387,6 +320,7 @@ try {
     .status-badge.alert { background: var(--danger-soft); border: 1px solid var(--danger); color: #ff8582; }
     .status-badge.process { background: var(--gold-soft); border: 1px solid var(--gold); color: var(--gold-hover); }
     .status-badge.success { background: var(--success-soft); border: 1px solid var(--success); color: #a8d488; }
+    .status-badge.info { background: rgba(97, 175, 239, 0.14); border: 1px solid #61afef; color: #61afef; }
 
     /* MODAL DE REGISTRO */
     .modal-overlay {
@@ -403,7 +337,6 @@ try {
       z-index: 9999;
       padding: 16px;
     }
-
     .modal-card {
       background: var(--surface);
       border: 1px solid var(--gold-border);
@@ -415,24 +348,14 @@ try {
       padding: 26px 28px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
     }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-    }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
     .modal-header h2 { margin: 0; font-size: 1.25rem; color: #ffffff; }
-
     .btn-close-modal { background: transparent; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; }
     .btn-close-modal:hover { color: var(--danger); }
 
     .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .form-group { margin-bottom: 14px; }
     .form-group label { display: block; font-size: 0.78rem; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
-
     .form-input, .form-select, .form-textarea {
       width: 100%;
       background: var(--card);
@@ -446,7 +369,6 @@ try {
       transition: all 0.2s ease;
     }
     .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-soft); }
-
     .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
     .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; }
 
@@ -480,7 +402,7 @@ try {
   <!-- CONTENEDOR PRINCIPAL -->
   <main class="dashboard-container">
 
-    <!-- MENSAJE DE CONFIRMACIÓN AL INSERTAR CASO -->
+    <!-- MENSAJE DE CONFIRMACIÓN -->
     <?php if ($msg): ?>
       <div class="alert-banner <?= $msgType ?>">
         <span><?= htmlspecialchars($msg) ?></span>
@@ -494,7 +416,7 @@ try {
         📊 Resumen General
       </button>
       <button class="tab-btn" id="btn-tab-callcenter" onclick="switchTab('callcenter')">
-        📞 Análisis Call Center
+        📞 Análisis Call Center & Motivos
       </button>
       <button class="tab-btn" id="btn-tab-fraud" onclick="switchTab('fraud')">
         🛡️ Análisis de Fraudes & Víctimas
@@ -648,24 +570,24 @@ try {
     </div>
 
     <!-- ========================================================
-         PESTAÑA 2: ANÁLISIS DETALLADO DEL CALL CENTER
+         PESTAÑA 2: ANÁLISIS DETALLADO DEL CALL CENTER & MOTIVOS
          ======================================================== -->
     <div id="tab-callcenter" class="tab-content">
       
       <div class="dash-header">
         <div>
-          <h1>Análisis Detallado de Operaciones del Call Center</h1>
-          <p>Estadísticas de volumen, franjas críticas de atención, distribución horaria y geografía.</p>
+          <h1>Análisis de Operaciones & Motivos de Contacto</h1>
+          <p>Determinación de volumen, horarios críticos y clasificación exacta de por qué llaman los clientes.</p>
         </div>
       </div>
 
-      <!-- ALERTA DE PERÍODOS EXTRAORDINARIOS -->
+      <!-- ALERTA DE MOTIVOS -->
       <div class="alert-box-extra">
         <div>
-          <h4>📌 Detección de Patrones y Períodos Extraordinarios</h4>
-          <p>Se identificó un incremento del <strong>+28.5% de llamadas</strong> durante los días 15 y 30 de cada mes (pago de quincena) y los días martes entre 11:00 y 13:00 hrs.</p>
+          <h4>💡 Inteligencia Operativa: Motivos Principales de Llamada</h4>
+          <p>El <strong>61.2% del volumen total</strong> se concentra en 3 motivos: <strong>Transacciones (28.4%)</strong>, <strong>Preguntas Generales (18.6%)</strong> y <strong>Problemas con ATM (14.2%)</strong>. Las consultas de <strong>Law Enforcement y Compliance</strong> representan el mayor tiempo de operación.</p>
         </div>
-        <span class="badge-tag critical">Franja Crítica: 11:00 - 13:30</span>
+        <span class="badge-tag">10 Motivos Clasificados</span>
       </div>
 
       <!-- 4 KPIs DE VOLUMEN CALL CENTER -->
@@ -678,33 +600,163 @@ try {
         </div>
 
         <div class="kpi-card">
-          <div class="kpi-title">Día con Mayor Volumen</div>
-          <div class="kpi-value gold" style="font-size:1.45rem;">Martes 15 Ago</div>
-          <div class="kpi-footer positive">742 llamadas recibidas</div>
-          <span class="kpi-sub">+50.2% sobre el promedio diario</span>
+          <div class="kpi-title">Motivo Principal (#1)</div>
+          <div class="kpi-value gold" style="font-size:1.4rem;">Transacciones</div>
+          <div class="kpi-footer warning">4,208 llamadas (28.4%)</div>
+          <span class="kpi-sub">Aclaraciones de saldo y pagos</span>
         </div>
 
         <div class="kpi-card">
-          <div class="kpi-title">Día con Menor Volumen</div>
-          <div class="kpi-value" style="font-size:1.45rem; color:var(--text-muted)">Domingo 10 Ago</div>
-          <div class="kpi-footer">124 llamadas recibidas</div>
-          <span class="kpi-sub">-74.8% por ser fin de semana</span>
+          <div class="kpi-title">Mayor Tiempo en Llamada (TMO)</div>
+          <div class="kpi-value" style="font-size:1.35rem; color:var(--danger)">Law Enforcement</div>
+          <div class="kpi-footer danger">9.0 min promedio / llamada</div>
+          <span class="kpi-sub">Requerimientos legales y oficios</span>
         </div>
 
         <div class="kpi-card">
           <div class="kpi-title">Hora Pico vs. Hora Valle</div>
           <div class="kpi-value" style="font-size:1.28rem; color:var(--gold-hover);">11:00 AM / 03:30 AM</div>
-          <div class="kpi-footer warning">Mayor: 1,240 ll / Menor: 18 ll</div>
+          <div class="kpi-footer positive">Mayor: 1,240 ll / Menor: 18 ll</div>
           <span class="kpi-sub">Ratio de demanda: 68 a 1</span>
         </div>
       </section>
 
-      <!-- SECCIÓN HORARIOS Y FRANJAS -->
+      <!-- SECCIÓN 1: MOTIVOS DE CONTACTO (GRÁFICAS) -->
+      <section class="charts-grid-equal-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Distribución de Llamadas por Motivo de Contacto</h3>
+            <span class="badge-tag">Volumen Absoluto</span>
+          </div>
+          <div class="chart-container" style="height:320px;">
+            <canvas id="reasonsBarChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Duración Promedio de Atención (TMO en Minutos)</h3>
+            <span class="badge-tag">Complejidad Operativa</span>
+          </div>
+          <div class="chart-container" style="height:320px;">
+            <canvas id="reasonsDurationChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- TABLA DETALLADA DE CLASIFICACIÓN DE MOTIVOS -->
+      <section class="table-card">
+        <div class="table-header">
+          <div>
+            <h3>Clasificación y Desglose de Motivos de Contacto (10 Categorías)</h3>
+            <p>Análisis detallado de participación, volumen y criticidad para dimensionamiento de personal.</p>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Categoría / Motivo</th>
+                <th>Volumen Trimestral</th>
+                <th>Participación %</th>
+                <th>Promedio Diario</th>
+                <th>Duración Media (TMO)</th>
+                <th>Nivel de Criticidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>💳 <strong>Transacciones</strong> (Cargos, SPEI, Pagos)</td>
+                <td class="amount">4,208</td>
+                <td class="mono-gold">28.4%</td>
+                <td>140 ll/día</td>
+                <td>4.5 min</td>
+                <td><span class="status-badge process">Media</span></td>
+              </tr>
+              <tr>
+                <td>❓ <strong>Preguntas generales</strong> (Información, Horarios)</td>
+                <td class="amount">2,756</td>
+                <td class="mono-gold">18.6%</td>
+                <td>92 ll/día</td>
+                <td>3.0 min</td>
+                <td><span class="status-badge success">Baja</span></td>
+              </tr>
+              <tr>
+                <td>🏧 <strong>Problemas con ATM</strong> (Retención, Efectivo no entregado)</td>
+                <td class="amount">2,104</td>
+                <td class="mono-gold">14.2%</td>
+                <td>70 ll/día</td>
+                <td>6.0 min</td>
+                <td><span class="status-badge alert">Alta</span></td>
+              </tr>
+              <tr>
+                <td>⚙️ <strong>Problemas técnicos</strong> (App móvil, Portal Web)</td>
+                <td class="amount">1,704</td>
+                <td class="mono-gold">11.5%</td>
+                <td>57 ll/día</td>
+                <td>5.2 min</td>
+                <td><span class="status-badge process">Media</span></td>
+              </tr>
+              <tr>
+                <td>💵 <strong>Reembolsos</strong> (Devoluciones de cobros duplicados)</td>
+                <td class="amount">1,452</td>
+                <td class="mono-gold">9.8%</td>
+                <td>48 ll/día</td>
+                <td>4.8 min</td>
+                <td><span class="status-badge process">Media</span></td>
+              </tr>
+              <tr>
+                <td>🛡️ <strong>Fraude / Scam</strong> (Reportes de suplantación y phishing)</td>
+                <td class="amount">1,245</td>
+                <td class="mono-gold">8.4%</td>
+                <td>41 ll/día</td>
+                <td>7.0 min</td>
+                <td><span class="status-badge alert">Crítica</span></td>
+              </tr>
+              <tr>
+                <td>₿ <strong>Información sobre Bitcoin</strong> (Criptoactivos, Billeteras)</td>
+                <td class="amount">607</td>
+                <td class="mono-gold">4.1%</td>
+                <td>20 ll/día</td>
+                <td>4.2 min</td>
+                <td><span class="status-badge info">Informativa</span></td>
+              </tr>
+              <tr>
+                <td>⚖️ <strong>Compliance</strong> (Cumplimiento normativo, KYC)</td>
+                <td class="amount">385</td>
+                <td class="mono-gold">2.6%</td>
+                <td>13 ll/día</td>
+                <td>8.0 min</td>
+                <td><span class="status-badge alert">Alta</span></td>
+              </tr>
+              <tr>
+                <td>👮 <strong>Law Enforcement</strong> (Requerimientos de autoridades)</td>
+                <td class="amount">222</td>
+                <td class="mono-gold">1.5%</td>
+                <td>7 ll/día</td>
+                <td>9.0 min</td>
+                <td><span class="status-badge alert">Crítica</span></td>
+              </tr>
+              <tr>
+                <td>📦 <strong>Otros</strong> (Sugerencias, No tipificados)</td>
+                <td class="amount">137</td>
+                <td class="mono-gold">0.9%</td>
+                <td>5 ll/día</td>
+                <td>2.7 min</td>
+                <td><span class="status-badge success">Baja</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 2: HORARIOS Y PATRONES -->
       <section class="charts-grid-2">
         <div class="chart-card">
           <div class="chart-header">
             <h3>Curva de Demanda por Horas (24 Horas)</h3>
-            <span class="badge-tag critical">Horas Críticas Marcadas</span>
+            <span class="badge-tag critical">Franja Crítica: 11h - 13h</span>
           </div>
           <div class="chart-container">
             <canvas id="cc24HoursChart"></canvas>
@@ -722,7 +774,7 @@ try {
         </div>
       </section>
 
-      <!-- SECCIÓN PATRONES Y GEOGRAFÍA -->
+      <!-- SECCIÓN 3: DÍAS Y GEOGRAFÍA -->
       <section class="charts-grid-2">
         <div class="chart-card">
           <div class="chart-header">
@@ -960,16 +1012,9 @@ try {
     Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
     Chart.defaults.font.family = "'Inter', sans-serif";
 
-    // FUNCIONES DEL MODAL
-    function openModal() {
-      document.getElementById('fraudModal').style.display = 'flex';
-    }
+    function openModal() { document.getElementById('fraudModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('fraudModal').style.display = 'none'; }
 
-    function closeModal() {
-      document.getElementById('fraudModal').style.display = 'none';
-    }
-
-    // FUNCIÓN PARA CAMBIAR ENTRE LAS 3 PESTAÑAS
     function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1099,8 +1144,77 @@ try {
     });
 
     // ==========================================
-    // GRÁFICOS PESTAÑA 2 (ANÁLISIS CALL CENTER)
+    // GRÁFICOS PESTAÑA 2 (MOTIVOS & CALL CENTER)
     // ==========================================
+    
+    // 1. Gráfico de 10 Motivos de Contacto
+    new Chart(document.getElementById('reasonsBarChart'), {
+      type: 'bar',
+      data: {
+        labels: [
+          'Transacciones (28.4%)',
+          'Preguntas generales (18.6%)',
+          'Problemas con ATM (14.2%)',
+          'Problemas técnicos (11.5%)',
+          'Reembolsos (9.8%)',
+          'Fraude / Scam (8.4%)',
+          'Info Bitcoin (4.1%)',
+          'Compliance (2.6%)',
+          'Law Enforcement (1.5%)',
+          'Otros (0.9%)'
+        ],
+        datasets: [{
+          label: 'Llamadas Trimestrales',
+          data: [4208, 2756, 2104, 1704, 1452, 1245, 607, 385, 222, 137],
+          backgroundColor: [
+            '#c9a24d', '#dfba69', '#e06c75', '#4fa3a0', '#61afef',
+            '#ff8582', '#f39c12', '#9b59b6', '#e74c3c', '#95a5a6'
+          ],
+          borderRadius: 6,
+          indexAxis: 'y'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // 2. Gráfico de Duración TMO
+    new Chart(document.getElementById('reasonsDurationChart'), {
+      type: 'bar',
+      data: {
+        labels: [
+          'Law Enforcement',
+          'Compliance',
+          'Fraude / Scam',
+          'Problemas ATM',
+          'Problemas técnicos',
+          'Reembolsos',
+          'Transacciones',
+          'Info Bitcoin',
+          'Preguntas generales',
+          'Otros'
+        ],
+        datasets: [{
+          label: 'Duración Promedio (Minutos)',
+          data: [9.0, 8.0, 7.0, 6.0, 5.2, 4.8, 4.5, 4.2, 3.0, 2.7],
+          backgroundColor: 'rgba(201, 162, 77, 0.85)',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { ticks: { callback: val => val + ' min' } }
+        }
+      }
+    });
+
+    // 3. Demanda 24 horas
     new Chart(document.getElementById('cc24HoursChart'), {
       type: 'line',
       data: {
@@ -1123,6 +1237,7 @@ try {
       }
     });
 
+    // 4. Franjas del día
     new Chart(document.getElementById('ccDaySlotsChart'), {
       type: 'doughnut',
       data: {
@@ -1141,6 +1256,7 @@ try {
       }
     });
 
+    // 5. Días de la semana
     new Chart(document.getElementById('ccWeekDaysChart'), {
       type: 'bar',
       data: {
@@ -1167,6 +1283,7 @@ try {
       }
     });
 
+    // 6. Geografía %
     new Chart(document.getElementById('ccGeoPercentChart'), {
       type: 'bar',
       data: {
