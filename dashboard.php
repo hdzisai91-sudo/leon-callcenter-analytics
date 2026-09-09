@@ -6,6 +6,13 @@ $userName = $_SESSION["user_name"] ?? "Isai";
 $msg = "";
 $msgType = "";
 
+// Si venimos de una redirección post-guardado, recuperar el mensaje guardado en sesión
+if (isset($_SESSION["flash_msg"])) {
+    $msg = $_SESSION["flash_msg"];
+    $msgType = $_SESSION["flash_type"] ?? "success";
+    unset($_SESSION["flash_msg"], $_SESSION["flash_type"]);
+}
+
 // PROCESAR FORMULARIO PARA REGISTRAR NUEVO CASO EN MYSQL
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] === "new_fraud") {
     $fraud_type = trim($_POST["fraud_type"] ?? "");
@@ -29,8 +36,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
             
             $stmt->execute([$report_code, $incident_date, $fraud_type, $attack_channel, $amount_affected, $amount_recovered, $state_name, $victim_age, $victim_gender, $status, $description]);
             
-            $msg = "Caso $report_code registrado con éxito en MySQL.";
-            $msgType = "success";
+            // Guardar mensaje en sesión y redirigir (Post-Redirect-Get):
+            // esto evita que un F5 o "volver atrás" reenvíe el formulario y duplique el caso.
+            $_SESSION["flash_msg"] = "Caso $report_code registrado con éxito en MySQL.";
+            $_SESSION["flash_type"] = "success";
+            header("Location: " . $_SERVER["PHP_SELF"]);
+            exit;
         } catch (PDOException $e) {
             $msg = "Error al guardar en MySQL: " . $e->getMessage();
             $msgType = "danger";
@@ -290,6 +301,7 @@ foreach ($age_range_defs as $label => $range) {
     $age_buckets[$label] = ['count' => 0, 'sum' => 0, 'types' => []];
 }
 $gender_counts = [];
+$gender_stats = [];
 foreach ($victims as $v) {
     $age = (int)$v['victim_age'];
     $amt = (float)$v['amount_affected'];
@@ -305,6 +317,13 @@ foreach ($victims as $v) {
 
     $g = trim($v['victim_gender']) ?: 'No especificado';
     $gender_counts[$g] = ($gender_counts[$g] ?? 0) + 1;
+
+    if (!isset($gender_stats[$g])) {
+        $gender_stats[$g] = ['count' => 0, 'sum' => 0, 'types' => []];
+    }
+    $gender_stats[$g]['count']++;
+    $gender_stats[$g]['sum'] += $amt;
+    $gender_stats[$g]['types'][$ftype] = ($gender_stats[$g]['types'][$ftype] ?? 0) + 1;
 }
 $total_victims = count($victims);
 $age_labels = array_keys($age_buckets);
@@ -319,6 +338,15 @@ $age_predominant_type = array_map(function($b) {
 $gender_labels = array_keys($gender_counts);
 $gender_values = array_values($gender_counts);
 $gender_pcts = array_map(fn($v) => $total_victims > 0 ? round(($v / $total_victims) * 100, 1) : 0, $gender_values);
+
+$gender_predominant_type = [];
+foreach ($gender_stats as $g => $s) {
+    if (empty($s['types'])) { $gender_predominant_type[$g] = 'N/D'; continue; }
+    $types_copy = $s['types'];
+    arsort($types_copy);
+    $gender_predominant_type[$g] = array_key_first($types_copy);
+}
+
 
 
 // --- Análisis geográfico (genérico: usa lo que exista realmente en state_name) ---
@@ -781,6 +809,49 @@ $distinct_states_count = count($geo);
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section class="table-card">
+        <div class="table-header">
+          <div>
+            <h3>Análisis Detallado por Género</h3>
+            <p>Número y porcentaje de víctimas, monto total perdido, pérdida promedio y modalidad de fraude predominante por género.</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Género</th>
+                <th>Núm. Víctimas</th>
+                <th>% del Total</th>
+                <th>Cantidad Total Perdida</th>
+                <th>Pérdida Promedio</th>
+                <th>Tipo de Fraude Predominante</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if ($total_victims === 0): ?>
+                <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:24px;">Sin víctimas registradas todavía.</td></tr>
+              <?php endif; ?>
+              <?php foreach ($gender_stats as $g => $s): ?>
+                <tr>
+                  <td><strong><?= htmlspecialchars($g) ?></strong></td>
+                  <td><?= number_format($s['count']) ?></td>
+                  <td class="mono-gold"><?= $total_victims > 0 ? round(($s['count'] / $total_victims) * 100, 1) : 0 ?>%</td>
+                  <td class="amount">$<?= number_format($s['sum'], 2) ?></td>
+                  <td>$<?= $s['count'] > 0 ? number_format($s['sum'] / $s['count'], 2) : '0.00' ?></td>
+                  <td><?= htmlspecialchars($gender_predominant_type[$g] ?? 'N/D') ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <?php if ($total_victims > 0): ?>
+        <p style="margin-top:14px; font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+          <strong>Nota metodológica:</strong> esta tabla muestra diferencias observadas en los datos registrados hasta ahora. Con un número de casos aún reducido, estas cifras no deben interpretarse como que un género sea "más vulnerable" o "más propenso" a cierto tipo de fraude — eso requeriría una muestra más grande y un análisis estadístico que descarte otros factores (edad, canal de contacto, tipo de fraude, etc.). Úsala como punto de partida descriptivo, no como conclusión causal.
+        </p>
+        <?php endif; ?>
       </section>
     </div>
 
