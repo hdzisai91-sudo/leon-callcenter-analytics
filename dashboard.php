@@ -366,6 +366,18 @@ $top_state_cases = $geo[0] ?? null;
 $top_state_amount = $geo_by_amount[0] ?? null;
 $top_state_avg = $geo_by_avg[0] ?? null;
 $distinct_states_count = count($geo);
+
+/* ============================================================
+   MATRIZ DE FRAUDE: cruces estadísticos consolidados
+   ============================================================ */
+$present_types = array_map(fn($t) => $t['fraud_type'], $types_by_count);
+
+// Matriz Estado × Tipo de Fraude (reutiliza $type_state_rows ya calculado arriba)
+$state_type_matrix = [];
+foreach ($type_state_rows as $row) {
+    $state_type_matrix[$row['state_name']][$row['fraud_type']] = (int)$row['c'];
+}
+$matrix_states = array_keys($state_type_matrix);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -516,6 +528,7 @@ $distinct_states_count = count($geo);
       <button class="tab-btn" id="btn-tab-fraud" onclick="switchTab('fraud')">Forense, Demografía & Rangos</button>
       <button class="tab-btn" id="btn-tab-geo" onclick="switchTab('geo')">Análisis Geográfico</button>
       <button class="tab-btn" id="btn-tab-modalidades" onclick="switchTab('modalidades')">Modalidades de Fraude</button>
+      <button class="tab-btn" id="btn-tab-matriz" onclick="switchTab('matriz')">Matriz de Fraude</button>
     </nav>
 
     <!-- ================= TAB 1: RESUMEN GENERAL ================= -->
@@ -1060,6 +1073,212 @@ $distinct_states_count = count($geo);
           </table>
         </div>
       </section>
+    </div>
+
+    <!-- ================= TAB 6: MATRIZ DE FRAUDE ================= -->
+    <div id="tab-matriz" class="tab-content">
+      <div class="dash-header">
+        <div>
+          <h1>Matriz de Fraude</h1>
+          <p>Cruces estadísticos consolidados: edad, género, estado, tipo de fraude y monto perdido.</p>
+        </div>
+      </div>
+
+      <?php if (empty($present_types)): ?>
+        <section class="table-card">
+          <div class="empty-state" style="height:120px;">Sin reportes de fraude registrados todavía. Esta matriz se llenará conforme se capturen casos.</div>
+        </section>
+      <?php else: ?>
+
+      <!-- 1. Edad × Tipo de Fraude -->
+      <section class="table-card">
+        <div class="table-header">
+          <div><h3>1. Edad × Tipo de Fraude</h3><p>Número de casos por rango de edad y modalidad de fraude.</p></div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Rango de Edad</th>
+                <?php foreach ($present_types as $pt): ?><th><?= htmlspecialchars($pt) ?></th><?php endforeach; ?>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($age_buckets as $label => $b): ?>
+                <tr>
+                  <td><strong><?= htmlspecialchars($label) ?></strong></td>
+                  <?php foreach ($present_types as $pt): ?>
+                    <td><?= $b['types'][$pt] ?? 0 ?></td>
+                  <?php endforeach; ?>
+                  <td class="mono-gold"><?= $b['count'] ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 2. Género × Tipo de Fraude -->
+      <section class="table-card">
+        <div class="table-header">
+          <div><h3>2. Género × Tipo de Fraude</h3><p>Número de casos por género y modalidad de fraude.</p></div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Género</th>
+                <?php foreach ($present_types as $pt): ?><th><?= htmlspecialchars($pt) ?></th><?php endforeach; ?>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($gender_stats as $g => $s): ?>
+                <tr>
+                  <td><strong><?= htmlspecialchars($g) ?></strong></td>
+                  <?php foreach ($present_types as $pt): ?>
+                    <td><?= $s['types'][$pt] ?? 0 ?></td>
+                  <?php endforeach; ?>
+                  <td class="mono-gold"><?= $s['count'] ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 3. Estado × Tipo de Fraude -->
+      <section class="table-card">
+        <div class="table-header">
+          <div><h3>3. Estado × Tipo de Fraude</h3><p>Número de casos por estado/región y modalidad de fraude.</p></div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Estado/Región</th>
+                <?php foreach ($present_types as $pt): ?><th><?= htmlspecialchars($pt) ?></th><?php endforeach; ?>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($matrix_states as $st): ?>
+                <?php $rowTotal = array_sum($state_type_matrix[$st]); ?>
+                <tr>
+                  <td><strong><?= htmlspecialchars($st) ?></strong></td>
+                  <?php foreach ($present_types as $pt): ?>
+                    <td><?= $state_type_matrix[$st][$pt] ?? 0 ?></td>
+                  <?php endforeach; ?>
+                  <td class="mono-gold"><?= $rowTotal ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="charts-grid-equal-2" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <!-- 4. Estado × Monto Perdido -->
+        <section class="table-card">
+          <div class="table-header"><div><h3>4. Estado × Monto Perdido</h3><p>Total y promedio de pérdida por estado/región.</p></div></div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead><tr><th>Estado</th><th>Total Perdido</th><th>Promedio</th></tr></thead>
+              <tbody>
+                <?php foreach ($geo_by_amount as $g): ?>
+                  <tr>
+                    <td><strong><?= htmlspecialchars($g['state_name']) ?></strong></td>
+                    <td class="amount">$<?= number_format($g['total_amt'], 2) ?></td>
+                    <td>$<?= number_format($g['avg_amt'], 2) ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 8. Estado × Número de Víctimas -->
+        <section class="table-card">
+          <div class="table-header"><div><h3>8. Estado × Número de Víctimas</h3><p>Cantidad de víctimas por estado/región.</p></div></div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead><tr><th>Estado</th><th>Núm. Víctimas</th><th>% del Total</th></tr></thead>
+              <tbody>
+                <?php foreach ($geo as $g): ?>
+                  <tr>
+                    <td><strong><?= htmlspecialchars($g['state_name']) ?></strong></td>
+                    <td><?= number_format($g['c']) ?></td>
+                    <td class="mono-gold"><?= $geo_total_cases > 0 ? round(($g['c']/$geo_total_cases)*100, 1) : 0 ?>%</td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 5. Edad × Monto Perdido -->
+        <section class="table-card">
+          <div class="table-header"><div><h3>5. Edad × Monto Perdido</h3><p>Total y promedio de pérdida por rango de edad.</p></div></div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead><tr><th>Rango de Edad</th><th>Total Perdido</th><th>Promedio</th></tr></thead>
+              <tbody>
+                <?php foreach ($age_buckets as $label => $b): ?>
+                  <tr>
+                    <td><strong><?= htmlspecialchars($label) ?></strong></td>
+                    <td class="amount">$<?= number_format($b['sum'], 2) ?></td>
+                    <td>$<?= $b['count'] > 0 ? number_format($b['sum'] / $b['count'], 2) : '0.00' ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 6. Género × Monto Perdido -->
+        <section class="table-card">
+          <div class="table-header"><div><h3>6. Género × Monto Perdido</h3><p>Total y promedio de pérdida por género.</p></div></div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead><tr><th>Género</th><th>Total Perdido</th><th>Promedio</th></tr></thead>
+              <tbody>
+                <?php foreach ($gender_stats as $g => $s): ?>
+                  <tr>
+                    <td><strong><?= htmlspecialchars($g) ?></strong></td>
+                    <td class="amount">$<?= number_format($s['sum'], 2) ?></td>
+                    <td>$<?= $s['count'] > 0 ? number_format($s['sum'] / $s['count'], 2) : '0.00' ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 7. Tipo de Fraude × Monto Perdido -->
+        <section class="table-card">
+          <div class="table-header"><div><h3>7. Tipo de Fraude × Monto Perdido</h3><p>Total y promedio de pérdida por modalidad.</p></div></div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead><tr><th>Modalidad</th><th>Total Perdido</th><th>Promedio</th></tr></thead>
+              <tbody>
+                <?php foreach ($types_by_loss as $t): ?>
+                  <tr>
+                    <td><strong><?= htmlspecialchars($t['fraud_type']) ?></strong></td>
+                    <td class="amount">$<?= number_format($t['total_amt'], 2) ?></td>
+                    <td>$<?= number_format($t['avg_amt'], 2) ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <p style="margin-top:4px; font-size:0.78rem; color:var(--text-muted); line-height:1.5;">
+        <strong>Nota metodológica:</strong> estas matrices muestran cruces descriptivos de los datos capturados hasta ahora. Con pocos casos, evita interpretar patrones como relaciones causales — úsalos como punto de partida para investigar, no como conclusiones definitivas.
+      </p>
+      <?php endif; ?>
     </div>
 
   </main>
