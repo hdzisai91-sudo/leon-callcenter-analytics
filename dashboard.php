@@ -52,6 +52,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
     }
 }
 
+// PROCESAR FORMULARIO PARA REGISTRAR NUEVA LLAMADA EN MYSQL
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] === "new_call") {
+    $call_date = trim($_POST["call_date"] ?? "");
+    $call_time = trim($_POST["call_time"] ?? "");
+    $duration_seconds = intval($_POST["duration_seconds"] ?? 180);
+    $state_name_call = trim($_POST["state_name_call"] ?? "");
+    $contact_reason = trim($_POST["contact_reason"] ?? "");
+    $day_slot = trim($_POST["day_slot"] ?? "");
+    $is_fraud_report = isset($_POST["is_fraud_report"]) ? 1 : 0;
+
+    if ($call_date && $call_time && $state_name_call && $contact_reason && $day_slot) {
+        try {
+            $stmt = $pdo->prepare("INSERT INTO call_records 
+                (call_date, call_time, duration_seconds, state_name, contact_reason, day_slot, is_fraud_report) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)");
+
+            $stmt->execute([$call_date, $call_time, $duration_seconds, $state_name_call, $contact_reason, $day_slot, $is_fraud_report]);
+
+            $_SESSION["flash_msg"] = "Llamada registrada con éxito en MySQL.";
+            $_SESSION["flash_type"] = "success";
+            header("Location: " . $_SERVER["PHP_SELF"]);
+            exit;
+        } catch (PDOException $e) {
+            $msg = "Error al guardar la llamada en MySQL: " . $e->getMessage();
+            $msgType = "danger";
+        }
+    } else {
+        $msg = "Por favor completa los campos obligatorios de la llamada.";
+        $msgType = "danger";
+    }
+}
+
 /* =========================================================================
    CONSULTAS A MYSQL — TODOS LOS DATOS DEL DASHBOARD SE CALCULAN AQUÍ
    ========================================================================= */
@@ -115,12 +147,38 @@ function formatHour12($h) {
     return "$h12:00 $suffix";
 }
 
-// --- Día pico (día de la semana) ---
+// --- Día pico y día de menor volumen (día de la semana) ---
 $dow_map = ['Monday' => 'Lunes', 'Tuesday' => 'Martes', 'Wednesday' => 'Miércoles', 'Thursday' => 'Jueves', 'Friday' => 'Viernes', 'Saturday' => 'Sábado', 'Sunday' => 'Domingo'];
 try {
     $peak_day_row = $pdo->query("SELECT DAYNAME(call_date) as dow, COUNT(*) as c FROM call_records GROUP BY DAYNAME(call_date) ORDER BY c DESC LIMIT 1")->fetch();
     $peak_day = $peak_day_row ? ($dow_map[$peak_day_row['dow']] ?? $peak_day_row['dow']) : 'N/D';
 } catch (Exception $e) { $peak_day = 'N/D'; }
+
+try {
+    $lowest_day_row = $pdo->query("SELECT DAYNAME(call_date) as dow, COUNT(*) as c FROM call_records GROUP BY DAYNAME(call_date) ORDER BY c ASC LIMIT 1")->fetch();
+    $lowest_day = $lowest_day_row ? ($dow_map[$lowest_day_row['dow']] ?? $lowest_day_row['dow']) : 'N/D';
+} catch (Exception $e) { $lowest_day = 'N/D'; }
+
+// --- Llamadas por estado de distribución ---
+try {
+    $calls_by_state = $pdo->query("SELECT state_name, COUNT(*) as c FROM call_records GROUP BY state_name ORDER BY c DESC")->fetchAll();
+} catch (Exception $e) { $calls_by_state = []; }
+$calls_by_state_total = array_sum(array_map(fn($r) => (int)$r['c'], $calls_by_state));
+
+// --- Evolución mensual de llamadas (últimos 6 meses) ---
+$calls_evo_labels = [];
+$calls_evo_keys = [];
+for ($i = 5; $i >= 0; $i--) {
+    $calls_evo_labels[] = ucfirst(date('M Y', strtotime("-$i months")));
+    $calls_evo_keys[] = date('Y-m', strtotime("-$i months"));
+}
+try {
+    $calls_monthly_rows = $pdo->query("SELECT DATE_FORMAT(call_date, '%Y-%m') as ym, COUNT(*) as c FROM call_records WHERE call_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) GROUP BY ym")->fetchAll();
+} catch (Exception $e) { $calls_monthly_rows = []; }
+$calls_monthly_lookup = [];
+foreach ($calls_monthly_rows as $r) { $calls_monthly_lookup[$r['ym']] = (int)$r['c']; }
+$calls_evo_values = [];
+foreach ($calls_evo_keys as $ym) { $calls_evo_values[] = $calls_monthly_lookup[$ym] ?? 0; }
 
 // --- Evolución semanal (últimas 12 semanas): llamadas vs reportes de fraude ---
 $evolution_labels = [];
@@ -228,6 +286,8 @@ $duration_values = array_map(fn($r) => round($r['avg_dur'] / 60, 1), $reasons_by
 $top_reason = $reasons[0] ?? null;
 $top_reason_pct = ($top_reason && $total_calls > 0) ? round(($top_reason['c'] / $total_calls) * 100, 1) : 0;
 $longest_reason = $reasons_by_duration[0] ?? null;
+$reason_pcts = array_map(fn($r) => $total_calls > 0 ? round(($r['c'] / $total_calls) * 100, 1) : 0, $reasons);
+
 
 // Texto dinámico del banner de motivos (top 3)
 $top3_text = "Sin datos suficientes de llamadas todavía.";
@@ -298,7 +358,7 @@ $age_range_defs = [
 ];
 $age_buckets = [];
 foreach ($age_range_defs as $label => $range) {
-    $age_buckets[$label] = ['count' => 0, 'sum' => 0, 'types' => []];
+    $age_buckets[$label] = ['count' => 0, 'sum' => 0, 'types' => [], 'genders' => []];
 }
 $gender_counts = [];
 $gender_stats = [];
@@ -317,6 +377,7 @@ foreach ($victims as $v) {
 
     $g = trim($v['victim_gender']) ?: 'No especificado';
     $gender_counts[$g] = ($gender_counts[$g] ?? 0) + 1;
+    $age_buckets[$bucket]['genders'][$g] = ($age_buckets[$bucket]['genders'][$g] ?? 0) + 1;
 
     if (!isset($gender_stats[$g])) {
         $gender_stats[$g] = ['count' => 0, 'sum' => 0, 'types' => []];
@@ -339,12 +400,39 @@ $gender_labels = array_keys($gender_counts);
 $gender_values = array_values($gender_counts);
 $gender_pcts = array_map(fn($v) => $total_victims > 0 ? round(($v / $total_victims) * 100, 1) : 0, $gender_values);
 
+// Matriz Edad × Género (para el resumen de Fraude)
+$matrix_genders = array_keys($gender_stats);
+
 $gender_predominant_type = [];
 foreach ($gender_stats as $g => $s) {
     if (empty($s['types'])) { $gender_predominant_type[$g] = 'N/D'; continue; }
     $types_copy = $s['types'];
     arsort($types_copy);
     $gender_predominant_type[$g] = array_key_first($types_copy);
+}
+
+// --- Evolución mensual por género (últimos 6 meses) ---
+$gender_evo_labels = [];
+$gender_evo_keys = [];
+for ($i = 5; $i >= 0; $i--) {
+    $gender_evo_labels[] = ucfirst(date('M Y', strtotime("-$i months")));
+    $gender_evo_keys[] = date('Y-m', strtotime("-$i months"));
+}
+try {
+    $gender_monthly_rows = $pdo->query("SELECT victim_gender, DATE_FORMAT(incident_date, '%Y-%m') as ym, COUNT(*) as c FROM fraud_reports WHERE incident_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) GROUP BY victim_gender, ym")->fetchAll();
+} catch (Exception $e) { $gender_monthly_rows = []; }
+$gender_monthly_lookup = [];
+foreach ($gender_monthly_rows as $row) {
+    $g = trim($row['victim_gender']) ?: 'No especificado';
+    $gender_monthly_lookup[$g][$row['ym']] = (int)$row['c'];
+}
+$gender_evo_datasets = [];
+foreach ($matrix_genders as $g) {
+    $data = [];
+    foreach ($gender_evo_keys as $ym) {
+        $data[] = $gender_monthly_lookup[$g][$ym] ?? 0;
+    }
+    $gender_evo_datasets[] = ['label' => $g, 'data' => $data];
 }
 
 
@@ -418,8 +506,11 @@ $matrix_states = array_keys($state_type_matrix);
     .alert-banner { padding: 12px 18px; border-radius: 10px; margin-bottom: 20px; font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; justify-content: space-between; }
     .alert-banner.success { background: var(--success-soft); border: 1px solid var(--success); color: #a8d488; }
     .alert-banner.danger { background: var(--danger-soft); border: 1px solid var(--danger); color: #ff8582; }
-    .tabs-nav { display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; }
-    .tab-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); padding: 10px 18px; border-radius: 10px; font-family: inherit; font-weight: 600; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
+    .tabs-nav { display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+    .tabs-nav::-webkit-scrollbar { height: 6px; }
+    .tabs-nav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+    .tabs-nav::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+    .tab-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); padding: 10px 18px; border-radius: 10px; font-family: inherit; font-weight: 600; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; flex-shrink: 0; white-space: nowrap; }
     .tab-btn:hover { background: var(--card-hover); color: var(--text); }
     .tab-btn.active { background: linear-gradient(135deg, rgba(201, 162, 77, 0.2), rgba(223, 186, 105, 0.1)); border-color: var(--gold); color: var(--gold-hover); box-shadow: 0 0 12px rgba(201, 162, 77, 0.2); }
     .tab-content { display: none; }
@@ -495,6 +586,7 @@ $matrix_states = array_keys($state_type_matrix);
   </style>
 </head>
 <body class="dashboard-body">
+  <!-- VERSION-CHECK: dashboard-fix-lazycharts-2026-09-11 -->
 
   <header class="navbar">
     <div class="nav-brand">
@@ -529,6 +621,7 @@ $matrix_states = array_keys($state_type_matrix);
       <button class="tab-btn" id="btn-tab-geo" onclick="switchTab('geo')">Análisis Geográfico</button>
       <button class="tab-btn" id="btn-tab-modalidades" onclick="switchTab('modalidades')">Modalidades de Fraude</button>
       <button class="tab-btn" id="btn-tab-matriz" onclick="switchTab('matriz')">Matriz de Fraude</button>
+      <button class="tab-btn" id="btn-tab-resumenfraude" onclick="switchTab('resumenfraude')">Fraude</button>
     </nav>
 
     <!-- ================= TAB 1: RESUMEN GENERAL ================= -->
@@ -645,6 +738,7 @@ $matrix_states = array_keys($state_type_matrix);
           <h1>Análisis de Operaciones & Motivos de Contacto</h1>
           <p>Determinación de volumen, horarios críticos y clasificación exacta de por qué llaman los clientes.</p>
         </div>
+        <button class="btn-primary" onclick="openCallModal()">+ Registrar Llamada</button>
       </div>
 
       <div class="alert-box-extra">
@@ -680,6 +774,12 @@ $matrix_states = array_keys($state_type_matrix);
           <div class="kpi-footer positive"><?= $peak_hour ? 'Mayor: ' . number_format($peak_hour['c']) . ' ll' : '' ?> <?= $valley_hour ? ' / Menor: ' . number_format($valley_hour['c']) . ' ll' : '' ?></div>
           <span class="kpi-sub"><?= $hour_ratio !== null ? 'Ratio de demanda: ' . $hour_ratio . ' a 1' : '' ?></span>
         </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Día de Mayor y Menor Volumen</div>
+          <div class="kpi-value" style="font-size:1.28rem; color:var(--gold-hover);"><?= htmlspecialchars($peak_day) ?> / <?= htmlspecialchars($lowest_day) ?></div>
+          <div class="kpi-footer positive">Día pico / Día de menor demanda</div>
+          <span class="kpi-sub">Basado en call_records</span>
+        </div>
       </section>
 
       <section class="charts-grid-equal-2">
@@ -708,6 +808,45 @@ $matrix_states = array_keys($state_type_matrix);
               <canvas id="reasonsDurationChart"></canvas>
             <?php endif; ?>
           </div>
+        </div>
+      </section>
+
+      <section class="charts-grid-equal-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Llamadas por Estado de Distribución</h3>
+            <span class="badge-tag">Volumen Geográfico</span>
+          </div>
+          <div class="chart-container" style="height:300px;">
+            <?php if (empty($calls_by_state)): ?>
+              <div class="empty-state">Sin llamadas registradas todavía.</div>
+            <?php else: ?>
+              <canvas id="callsByStateChart"></canvas>
+            <?php endif; ?>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Distribución Porcentual por Motivo</h3>
+            <span class="badge-tag">% del Total</span>
+          </div>
+          <div class="chart-container" style="height:300px;">
+            <?php if (empty($reason_labels)): ?>
+              <div class="empty-state">Sin llamadas registradas todavía.</div>
+            <?php else: ?>
+              <canvas id="reasonsPctChart"></canvas>
+            <?php endif; ?>
+          </div>
+        </div>
+      </section>
+
+      <section class="chart-card">
+        <div class="chart-header">
+          <h3>Evolución Mensual de Llamadas</h3>
+          <span class="badge-tag">Últimos 6 meses</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="callsMonthlyEvoChart"></canvas>
         </div>
       </section>
     </div>
@@ -1281,6 +1420,141 @@ $matrix_states = array_keys($state_type_matrix);
       <?php endif; ?>
     </div>
 
+    <!-- ================= TAB 7: FRAUDE (RESUMEN CONSOLIDADO) ================= -->
+    <div id="tab-resumenfraude" class="tab-content">
+      <div class="dash-header">
+        <div>
+          <h1>Fraude</h1>
+          <p>Panorama consolidado: volumen, pérdidas, distribución por estado, tipo, edad y género.</p>
+        </div>
+        <button class="btn-primary" onclick="openModal()">+ Registrar Caso</button>
+      </div>
+
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Total Cases</div>
+          <div class="kpi-value gold"><?= number_format($total_frauds) ?></div>
+          <span class="kpi-sub">Casos registrados en fraud_reports</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Total Victims</div>
+          <div class="kpi-value teal"><?= number_format($total_victims) ?></div>
+          <span class="kpi-sub">Víctimas con datos demográficos</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Total Loss</div>
+          <div class="kpi-value danger">$<?= number_format($stat_total, 2) ?> <small style="font-size:0.5em; color:var(--text-muted)">MXN</small></div>
+          <span class="kpi-sub">Suma de todos los montos afectados</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Average Loss</div>
+          <div class="kpi-value gold">$<?= number_format($stat_avg, 2) ?> <small style="font-size:0.5em; color:var(--text-muted)">MXN</small></div>
+          <span class="kpi-sub">Promedio por caso</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Mediana</div>
+          <div class="kpi-value teal">$<?= number_format($stat_median, 2) ?> <small style="font-size:0.5em; color:var(--text-muted)">MXN</small></div>
+          <span class="kpi-sub">Valor central sin sesgo</span>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Pérdida Máxima</div>
+          <div class="kpi-value purple">$<?= number_format($stat_max, 2) ?> <small style="font-size:0.5em; color:var(--text-muted)">MXN</small></div>
+          <span class="kpi-sub">Caso de mayor impacto</span>
+        </div>
+      </section>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <!-- Casos y pérdida por estado -->
+        <section class="table-card">
+          <div class="table-header"><div><h3>Casos y Pérdida por Estado</h3><p>Volumen y monto total por estado/región.</p></div></div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead><tr><th>Estado</th><th>Casos</th><th>Pérdida Total</th></tr></thead>
+              <tbody>
+                <?php if (empty($geo)): ?>
+                  <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">Sin datos todavía.</td></tr>
+                <?php endif; ?>
+                <?php foreach ($geo as $g): ?>
+                  <tr>
+                    <td><strong><?= htmlspecialchars($g['state_name']) ?></strong></td>
+                    <td><?= number_format($g['c']) ?></td>
+                    <td class="amount">$<?= number_format($g['total_amt'], 2) ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Casos y pérdida por tipo de fraude -->
+        <section class="table-card">
+          <div class="table-header"><div><h3>Casos y Pérdida por Tipo de Fraude</h3><p>Volumen y monto total por modalidad.</p></div></div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead><tr><th>Modalidad</th><th>Casos</th><th>Pérdida Total</th></tr></thead>
+              <tbody>
+                <?php if (empty($types_by_count)): ?>
+                  <tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">Sin datos todavía.</td></tr>
+                <?php endif; ?>
+                <?php foreach ($types_by_count as $t): ?>
+                  <tr>
+                    <td><strong><?= htmlspecialchars($t['fraud_type']) ?></strong></td>
+                    <td><?= number_format($t['c']) ?></td>
+                    <td class="amount">$<?= number_format($t['total_amt'], 2) ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Víctimas por edad y género -->
+      <section class="table-card">
+        <div class="table-header"><div><h3>Víctimas por Edad y Género</h3><p>Número de víctimas cruzando rango de edad con género.</p></div></div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Rango de Edad</th>
+                <?php foreach ($matrix_genders as $g): ?><th><?= htmlspecialchars($g) ?></th><?php endforeach; ?>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if ($total_victims === 0): ?>
+                <tr><td colspan="<?= count($matrix_genders) + 2 ?>" style="text-align:center; color:var(--text-muted); padding:20px;">Sin víctimas registradas todavía.</td></tr>
+              <?php endif; ?>
+              <?php foreach ($age_buckets as $label => $b): ?>
+                <tr>
+                  <td><strong><?= htmlspecialchars($label) ?></strong></td>
+                  <?php foreach ($matrix_genders as $g): ?>
+                    <td><?= $b['genders'][$g] ?? 0 ?></td>
+                  <?php endforeach; ?>
+                  <td class="mono-gold"><?= $b['count'] ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Género y evolución -->
+      <section class="chart-card">
+        <div class="chart-header">
+          <h3>Género y Evolución</h3>
+          <span class="badge-tag">Últimos 6 meses</span>
+        </div>
+        <div class="chart-container">
+          <?php if (empty($gender_evo_datasets) || $total_victims === 0): ?>
+            <div class="empty-state">Sin datos suficientes para mostrar evolución por género.</div>
+          <?php else: ?>
+            <canvas id="genderEvoChart"></canvas>
+          <?php endif; ?>
+        </div>
+      </section>
+    </div>
+
   </main>
 
   <!-- MODAL -->
@@ -1379,6 +1653,90 @@ $matrix_states = array_keys($state_type_matrix);
     </div>
   </div>
 
+  <!-- MODAL: FORMULARIO PARA REGISTRAR NUEVA LLAMADA -->
+  <div id="callModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Registrar Nueva Llamada</h2>
+        <button class="btn-close-modal" onclick="closeCallModal()">✕</button>
+      </div>
+      <form method="post">
+        <input type="hidden" name="action" value="new_call">
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Fecha de la Llamada *</label>
+            <input type="date" name="call_date" class="form-input" required value="<?= date('Y-m-d') ?>">
+          </div>
+          <div class="form-group">
+            <label>Hora de la Llamada *</label>
+            <input type="time" name="call_time" class="form-input" required value="<?= date('H:i') ?>">
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Duración (segundos) *</label>
+            <input type="number" name="duration_seconds" class="form-input" placeholder="Ej. 240" value="180" min="1" required>
+          </div>
+          <div class="form-group">
+            <label>Turno del Día *</label>
+            <select name="day_slot" class="form-select" required>
+              <option value="Madrugada (0-6h)">Madrugada (0-6h)</option>
+              <option value="Mañana (6-12h)" selected>Mañana (6-12h)</option>
+              <option value="Tarde (12-18h)">Tarde (12-18h)</option>
+              <option value="Noche (18-24h)">Noche (18-24h)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Estado de Residencia *</label>
+            <select name="state_name_call" class="form-select" required>
+              <option value="California (CA)">California (CA)</option>
+              <option value="Texas (TX)">Texas (TX)</option>
+              <option value="Florida (FL)">Florida (FL)</option>
+              <option value="New York (NY)">New York (NY)</option>
+              <option value="Illinois (IL)">Illinois (IL)</option>
+              <option value="Pennsylvania (PA)">Pennsylvania (PA)</option>
+              <option value="Georgia (GA)">Georgia (GA)</option>
+              <option value="Ciudad de México">Ciudad de México</option>
+              <option value="Estado de México">Estado de México</option>
+              <option value="Jalisco">Jalisco</option>
+              <option value="Nuevo León">Nuevo León</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Motivo de Contacto *</label>
+            <select name="contact_reason" class="form-select" required>
+              <option value="Transacciones">Transacciones</option>
+              <option value="Preguntas generales">Preguntas generales</option>
+              <option value="Problemas con ATM">Problemas con ATM</option>
+              <option value="Problemas técnicos">Problemas técnicos</option>
+              <option value="Reembolsos">Reembolsos</option>
+              <option value="Fraude / Scam">Fraude / Scam</option>
+              <option value="Info Bitcoin">Info Bitcoin</option>
+              <option value="Compliance">Compliance</option>
+              <option value="Law Enforcement">Law Enforcement</option>
+              <option value="Otros">Otros</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" name="is_fraud_report" id="is_fraud_report" style="width:auto;">
+          <label for="is_fraud_report" style="margin:0; color:var(--text);">Esta llamada derivó en un reporte de fraude</label>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="closeCallModal()">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar Llamada en MySQL</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     Chart.defaults.color = '#8b98a8';
     Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
@@ -1386,133 +1744,207 @@ $matrix_states = array_keys($state_type_matrix);
 
     function openModal() { document.getElementById('fraudModal').style.display = 'flex'; }
     function closeModal() { document.getElementById('fraudModal').style.display = 'none'; }
+    function openCallModal() { document.getElementById('callModal').style.display = 'flex'; }
+    function closeCallModal() { document.getElementById('callModal').style.display = 'none'; }
 
     function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
       document.getElementById('btn-tab-' + tabName).classList.add('active');
       document.getElementById('tab-' + tabName).classList.add('active');
+      initChartsForTab(tabName);
     }
 
     const palette = ['#c9a24d', '#dfba69', '#4fa3a0', '#e06c75', '#61afef', '#98c379', '#c678dd', '#f39c12', '#9b59b6', '#95a5a6'];
 
-    // ===== TAB 1 =====
-    new Chart(document.getElementById('evolutionChart'), {
-      type: 'line',
-      data: {
-        labels: <?= json_encode($evolution_labels) ?>,
-        datasets: [
-          { label: 'Llamadas Totales', data: <?= json_encode($evolution_calls) ?>, borderColor: '#4fa3a0', backgroundColor: 'rgba(79, 163, 160, 0.1)', fill: true, tension: 0.35, yAxisID: 'y' },
-          { label: 'Reportes Fraude', data: <?= json_encode($evolution_frauds) ?>, borderColor: '#c9a24d', backgroundColor: 'rgba(201, 162, 77, 0.15)', fill: true, tension: 0.35, yAxisID: 'y1' }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'top' } },
-        scales: {
-          y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Llamadas' } },
-          y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Fraudes' } }
+    // Control de inicialización perezosa: cada pestaña dibuja sus gráficas
+    // solo la primera vez que se abre (cuando el canvas ya es visible y
+    // tiene tamaño real). Esto evita un error interno de Chart.js que
+    // ocurre al crear gráficas de barras dentro de contenedores ocultos.
+    const chartsInitialized = { general: false, callcenter: false, fraud: false, geo: false, modalidades: false, resumenfraude: false };
+
+    function initChartsForTab(tabName) {
+      if (chartsInitialized[tabName]) return;
+      chartsInitialized[tabName] = true;
+      if (tabName === 'general') initGeneralCharts();
+      else if (tabName === 'callcenter') initCallcenterCharts();
+      else if (tabName === 'fraud') initForenseCharts();
+      else if (tabName === 'geo') initGeoCharts();
+      else if (tabName === 'modalidades') initModalidadesCharts();
+      else if (tabName === 'resumenfraude') initResumenFraudeCharts();
+    }
+
+    // ===== TAB 1: RESUMEN GENERAL =====
+    function initGeneralCharts() {
+      new Chart(document.getElementById('evolutionChart'), {
+        type: 'line',
+        data: {
+          labels: <?= json_encode($evolution_labels) ?>,
+          datasets: [
+            { label: 'Llamadas Totales', data: <?= json_encode($evolution_calls) ?>, borderColor: '#4fa3a0', backgroundColor: 'rgba(79, 163, 160, 0.1)', fill: true, tension: 0.35, yAxisID: 'y' },
+            { label: 'Reportes Fraude', data: <?= json_encode($evolution_frauds) ?>, borderColor: '#c9a24d', backgroundColor: 'rgba(201, 162, 77, 0.15)', fill: true, tension: 0.35, yAxisID: 'y1' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: {
+            y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Llamadas' } },
+            y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Fraudes' } }
+          }
         }
-      }
-    });
+      });
 
-    <?php if (!empty($fraud_type_labels)): ?>
-    new Chart(document.getElementById('fraudTypesChart'), {
-      type: 'doughnut',
-      data: { labels: <?= json_encode($fraud_type_labels) ?>, datasets: [{ data: <?= json_encode($fraud_type_values) ?>, backgroundColor: palette, borderColor: '#0f151d', borderWidth: 3 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
-    });
-    <?php endif; ?>
+      <?php if (!empty($fraud_type_labels)): ?>
+      new Chart(document.getElementById('fraudTypesChart'), {
+        type: 'doughnut',
+        data: { labels: <?= json_encode($fraud_type_labels) ?>, datasets: [{ data: <?= json_encode($fraud_type_values) ?>, backgroundColor: palette, borderColor: '#0f151d', borderWidth: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
+      });
+      <?php endif; ?>
+    }
 
-    // ===== TAB 2 =====
-    <?php if (!empty($reason_labels)): ?>
-    new Chart(document.getElementById('reasonsBarChart'), {
-      type: 'bar',
-      data: { labels: <?= json_encode($reason_labels) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode($reason_counts) ?>, backgroundColor: palette, borderRadius: 6, indexAxis: 'y' }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
-    <?php endif; ?>
+    // ===== TAB 2: CALL CENTER =====
+    function initCallcenterCharts() {
+      <?php if (!empty($reason_labels)): ?>
+      new Chart(document.getElementById('reasonsBarChart'), {
+        type: 'bar',
+        data: { labels: <?= json_encode($reason_labels) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode($reason_counts) ?>, backgroundColor: palette, borderRadius: 6 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+      <?php endif; ?>
 
-    <?php if (!empty($duration_labels)): ?>
-    new Chart(document.getElementById('reasonsDurationChart'), {
-      type: 'bar',
-      data: { labels: <?= json_encode($duration_labels) ?>, datasets: [{ label: 'Duración Promedio (Minutos)', data: <?= json_encode($duration_values) ?>, backgroundColor: 'rgba(201, 162, 77, 0.85)', borderRadius: 6 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: val => val + ' min' } } } }
-    });
-    <?php endif; ?>
+      <?php if (!empty($duration_labels)): ?>
+      new Chart(document.getElementById('reasonsDurationChart'), {
+        type: 'bar',
+        data: { labels: <?= json_encode($duration_labels) ?>, datasets: [{ label: 'Duración Promedio (Minutos)', data: <?= json_encode($duration_values) ?>, backgroundColor: 'rgba(201, 162, 77, 0.85)', borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: val => val + ' min' } } } }
+      });
+      <?php endif; ?>
 
-    // ===== TAB 3 =====
-    <?php if ($stat_count > 0): ?>
-    new Chart(document.getElementById('lossRangesBarChart'), {
-      type: 'bar',
-      data: { labels: <?= json_encode($range_labels) ?>, datasets: [{ label: 'Número de Casos', data: <?= json_encode($range_counts) ?>, backgroundColor: palette, borderRadius: 6 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: 'Cantidad de Casos' } } } }
-    });
-    new Chart(document.getElementById('lossRangesDonutChart'), {
-      type: 'doughnut',
-      data: { labels: <?= json_encode($range_labels) ?>, datasets: [{ data: <?= json_encode($range_pcts) ?>, backgroundColor: palette, borderColor: '#0f151d', borderWidth: 3 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
-    });
-    <?php endif; ?>
+      <?php if (!empty($calls_by_state)): ?>
+      new Chart(document.getElementById('callsByStateChart'), {
+        type: 'bar',
+        data: { labels: <?= json_encode(array_map(fn($r) => $r['state_name'], $calls_by_state)) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode(array_map(fn($r) => (int)$r['c'], $calls_by_state)) ?>, backgroundColor: '#4fa3a0', borderRadius: 6 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+      <?php endif; ?>
 
-    <?php if ($total_victims > 0): ?>
-    new Chart(document.getElementById('victimAgeChart'), {
-      type: 'pie',
-      data: { labels: <?= json_encode($age_labels) ?>, datasets: [{ data: <?= json_encode($age_pcts) ?>, backgroundColor: ['#4fa3a0', '#c9a24d', '#e06c75', '#98c379', '#61afef', '#c678dd', '#f39c12'], borderColor: '#0f151d', borderWidth: 2 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
-    });
-    new Chart(document.getElementById('victimGenderChart'), {
-      type: 'doughnut',
-      data: { labels: <?= json_encode($gender_labels) ?>, datasets: [{ data: <?= json_encode($gender_values) ?>, backgroundColor: ['#61afef', '#dfba69', '#c678dd'], borderColor: '#0f151d', borderWidth: 3 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
-    });
-    new Chart(document.getElementById('victimLossByAgeChart'), {
-      type: 'bar',
-      data: { labels: <?= json_encode($age_labels) ?>, datasets: [{ label: 'Pérdida Promedio ($ MXN)', data: <?= json_encode($age_avg_loss) ?>, backgroundColor: ['#4fa3a0', '#c9a24d', '#e06c75', '#98c379', '#61afef', '#c678dd', '#f39c12'], borderRadius: 6 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: val => '$' + (val/1000) + 'k' } } } }
-    });
-    <?php endif; ?>
+      <?php if (!empty($reason_labels)): ?>
+      new Chart(document.getElementById('reasonsPctChart'), {
+        type: 'doughnut',
+        data: { labels: <?= json_encode($reason_labels) ?>, datasets: [{ data: <?= json_encode($reason_pcts) ?>, backgroundColor: palette, borderColor: '#0f151d', borderWidth: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
+      });
+      <?php endif; ?>
 
-    // ===== TAB 4 =====
-    <?php if (!empty($geo)): ?>
-    new Chart(document.getElementById('geoCasesChart'), {
-      type: 'bar',
-      data: { labels: <?= json_encode(array_map(fn($g) => $g['state_name'], $geo)) ?>, datasets: [{ label: 'Número de Víctimas', data: <?= json_encode(array_map(fn($g) => (int)$g['c'], $geo)) ?>, backgroundColor: '#c9a24d', borderRadius: 6, indexAxis: 'y' }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
-    new Chart(document.getElementById('geoAmountChart'), {
-      type: 'bar',
-      data: { labels: <?= json_encode(array_map(fn($g) => $g['state_name'], $geo_by_amount)) ?>, datasets: [{ label: 'Monto Total ($ MXN)', data: <?= json_encode(array_map(fn($g) => round($g['total_amt'], 2), $geo_by_amount)) ?>, backgroundColor: '#e06c75', borderRadius: 6, indexAxis: 'y' }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
-    <?php endif; ?>
+      new Chart(document.getElementById('callsMonthlyEvoChart'), {
+        type: 'line',
+        data: { labels: <?= json_encode($calls_evo_labels) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode($calls_evo_values) ?>, borderColor: '#4fa3a0', backgroundColor: 'rgba(79, 163, 160, 0.12)', fill: true, tension: 0.3 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
+
+    // ===== TAB 3: FORENSE, DEMOGRAFÍA & RANGOS =====
+    function initForenseCharts() {
+      <?php if ($stat_count > 0): ?>
+      new Chart(document.getElementById('lossRangesBarChart'), {
+        type: 'bar',
+        data: { labels: <?= json_encode($range_labels) ?>, datasets: [{ label: 'Número de Casos', data: <?= json_encode($range_counts) ?>, backgroundColor: palette, borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: 'Cantidad de Casos' } } } }
+      });
+      new Chart(document.getElementById('lossRangesDonutChart'), {
+        type: 'doughnut',
+        data: { labels: <?= json_encode($range_labels) ?>, datasets: [{ data: <?= json_encode($range_pcts) ?>, backgroundColor: palette, borderColor: '#0f151d', borderWidth: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
+      });
+      <?php endif; ?>
+
+      <?php if ($total_victims > 0): ?>
+      new Chart(document.getElementById('victimAgeChart'), {
+        type: 'pie',
+        data: { labels: <?= json_encode($age_labels) ?>, datasets: [{ data: <?= json_encode($age_pcts) ?>, backgroundColor: ['#4fa3a0', '#c9a24d', '#e06c75', '#98c379', '#61afef', '#c678dd', '#f39c12'], borderColor: '#0f151d', borderWidth: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
+      });
+      new Chart(document.getElementById('victimGenderChart'), {
+        type: 'doughnut',
+        data: { labels: <?= json_encode($gender_labels) ?>, datasets: [{ data: <?= json_encode($gender_values) ?>, backgroundColor: ['#61afef', '#dfba69', '#c678dd'], borderColor: '#0f151d', borderWidth: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
+      });
+      new Chart(document.getElementById('victimLossByAgeChart'), {
+        type: 'bar',
+        data: { labels: <?= json_encode($age_labels) ?>, datasets: [{ label: 'Pérdida Promedio ($ MXN)', data: <?= json_encode($age_avg_loss) ?>, backgroundColor: ['#4fa3a0', '#c9a24d', '#e06c75', '#98c379', '#61afef', '#c678dd', '#f39c12'], borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: val => '$' + (val/1000) + 'k' } } } }
+      });
+      <?php endif; ?>
+    }
+
+    // ===== TAB 4: ANÁLISIS GEOGRÁFICO =====
+    function initGeoCharts() {
+      <?php if (!empty($geo)): ?>
+      new Chart(document.getElementById('geoCasesChart'), {
+        type: 'bar',
+        data: { labels: <?= json_encode(array_map(fn($g) => $g['state_name'], $geo)) ?>, datasets: [{ label: 'Número de Víctimas', data: <?= json_encode(array_map(fn($g) => (int)$g['c'], $geo)) ?>, backgroundColor: '#c9a24d', borderRadius: 6 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+      new Chart(document.getElementById('geoAmountChart'), {
+        type: 'bar',
+        data: { labels: <?= json_encode(array_map(fn($g) => $g['state_name'], $geo_by_amount)) ?>, datasets: [{ label: 'Monto Total ($ MXN)', data: <?= json_encode(array_map(fn($g) => round($g['total_amt'], 2), $geo_by_amount)) ?>, backgroundColor: '#e06c75', borderRadius: 6 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+      <?php endif; ?>
+    }
 
     // ===== TAB 5: MODALIDADES DE FRAUDE =====
-    <?php if (!empty($evo_type_datasets) && $modalidades_total > 0): ?>
-    new Chart(document.getElementById('modalidadesEvoChart'), {
-      type: 'line',
-      data: {
-        labels: <?= json_encode($evo_type_labels) ?>,
-        datasets: [
-          <?php foreach ($evo_type_datasets as $i => $ds): ?>
-          { label: <?= json_encode($ds['label']) ?>, data: <?= json_encode($ds['data']) ?>, borderColor: palette[<?= $i ?> % palette.length], backgroundColor: 'transparent', tension: 0.3 },
-          <?php endforeach; ?>
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
-    });
-    <?php endif; ?>
+    function initModalidadesCharts() {
+      <?php if (!empty($evo_type_datasets) && $modalidades_total > 0): ?>
+      new Chart(document.getElementById('modalidadesEvoChart'), {
+        type: 'line',
+        data: {
+          labels: <?= json_encode($evo_type_labels) ?>,
+          datasets: [
+            <?php foreach ($evo_type_datasets as $i => $ds): ?>
+            { label: <?= json_encode($ds['label']) ?>, data: <?= json_encode($ds['data']) ?>, borderColor: palette[<?= $i ?> % palette.length], backgroundColor: 'transparent', tension: 0.3 },
+            <?php endforeach; ?>
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
+      });
+      <?php endif; ?>
 
-    <?php if (!empty($types_by_loss)): ?>
-    new Chart(document.getElementById('modalidadesLossChart'), {
-      type: 'bar',
-      data: {
-        labels: <?= json_encode(array_map(fn($t) => $t['fraud_type'], $types_by_loss)) ?>,
-        datasets: [{ label: 'Pérdida Total ($ MXN)', data: <?= json_encode(array_map(fn($t) => round($t['total_amt'], 2), $types_by_loss)) ?>, backgroundColor: '#e06c75', borderRadius: 6, indexAxis: 'y' }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-    });
-    <?php endif; ?>
+      <?php if (!empty($types_by_loss)): ?>
+      new Chart(document.getElementById('modalidadesLossChart'), {
+        type: 'bar',
+        data: {
+          labels: <?= json_encode(array_map(fn($t) => $t['fraud_type'], $types_by_loss)) ?>,
+          datasets: [{ label: 'Pérdida Total ($ MXN)', data: <?= json_encode(array_map(fn($t) => round($t['total_amt'], 2), $types_by_loss)) ?>, backgroundColor: '#e06c75', borderRadius: 6 }]
+        },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+      <?php endif; ?>
+    }
+
+    // ===== TAB 7: FRAUDE (RESUMEN CONSOLIDADO) =====
+    function initResumenFraudeCharts() {
+      <?php if (!empty($gender_evo_datasets) && $total_victims > 0): ?>
+      new Chart(document.getElementById('genderEvoChart'), {
+        type: 'line',
+        data: {
+          labels: <?= json_encode($gender_evo_labels) ?>,
+          datasets: [
+            <?php foreach ($gender_evo_datasets as $i => $ds): ?>
+            { label: <?= json_encode($ds['label']) ?>, data: <?= json_encode($ds['data']) ?>, borderColor: palette[<?= $i ?> % palette.length], backgroundColor: 'transparent', tension: 0.3 },
+            <?php endforeach; ?>
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
+      });
+      <?php endif; ?>
+    }
+
+    // La pestaña "Resumen General" está visible desde que carga la página,
+    // así que sus gráficas se inicializan de inmediato.
+    initChartsForTab('general');
   </script>
 </body>
 </html>
