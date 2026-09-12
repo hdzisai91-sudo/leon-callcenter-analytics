@@ -1809,7 +1809,7 @@ $matrix_states = array_keys($state_type_matrix);
       <?php if (!empty($reason_labels)): ?>
       new Chart(document.getElementById('reasonsBarChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode($reason_labels) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode($reason_counts) ?>, backgroundColor: palette, borderRadius: 6 }] },
+        data: { labels: <?= json_encode($reason_labels) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode($reason_counts) ?>, backgroundColor: palette, borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
       <?php endif; ?>
@@ -1817,7 +1817,7 @@ $matrix_states = array_keys($state_type_matrix);
       <?php if (!empty($duration_labels)): ?>
       new Chart(document.getElementById('reasonsDurationChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode($duration_labels) ?>, datasets: [{ label: 'Duración Promedio (Minutos)', data: <?= json_encode($duration_values) ?>, backgroundColor: 'rgba(201, 162, 77, 0.85)', borderRadius: 6 }] },
+        data: { labels: <?= json_encode($duration_labels) ?>, datasets: [{ label: 'Duración Promedio (Minutos)', data: <?= json_encode($duration_values) ?>, backgroundColor: 'rgba(201, 162, 77, 0.85)', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: val => val + ' min' } } } }
       });
       <?php endif; ?>
@@ -1825,7 +1825,7 @@ $matrix_states = array_keys($state_type_matrix);
       <?php if (!empty($calls_by_state)): ?>
       new Chart(document.getElementById('callsByStateChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode(array_map(fn($r) => $r['state_name'], $calls_by_state)) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode(array_map(fn($r) => (int)$r['c'], $calls_by_state)) ?>, backgroundColor: '#4fa3a0', borderRadius: 6 }] },
+        data: { labels: <?= json_encode(array_map(fn($r) => $r['state_name'], $calls_by_state)) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode(array_map(fn($r) => (int)$r['c'], $calls_by_state)) ?>, backgroundColor: '#4fa3a0', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
       <?php endif; ?>
@@ -1850,7 +1850,7 @@ $matrix_states = array_keys($state_type_matrix);
       <?php if ($stat_count > 0): ?>
       new Chart(document.getElementById('lossRangesBarChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode($range_labels) ?>, datasets: [{ label: 'Número de Casos', data: <?= json_encode($range_counts) ?>, backgroundColor: palette, borderRadius: 6 }] },
+        data: { labels: <?= json_encode($range_labels) ?>, datasets: [{ label: 'Número de Casos', data: <?= json_encode($range_counts) ?>, backgroundColor: palette, borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: 'Cantidad de Casos' } } } }
       });
       new Chart(document.getElementById('lossRangesDonutChart'), {
@@ -1873,7 +1873,7 @@ $matrix_states = array_keys($state_type_matrix);
       });
       new Chart(document.getElementById('victimLossByAgeChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode($age_labels) ?>, datasets: [{ label: 'Pérdida Promedio ($ MXN)', data: <?= json_encode($age_avg_loss) ?>, backgroundColor: ['#4fa3a0', '#c9a24d', '#e06c75', '#98c379', '#61afef', '#c678dd', '#f39c12'], borderRadius: 6 }] },
+        data: { labels: <?= json_encode($age_labels) ?>, datasets: [{ label: 'Pérdida Promedio ($ MXN)', data: <?= json_encode($age_avg_loss) ?>, backgroundColor: ['#4fa3a0', '#c9a24d', '#e06c75', '#98c379', '#61afef', '#c678dd', '#f39c12'], borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: val => '$' + (val/1000) + 'k' } } } }
       });
       <?php endif; ?>
@@ -1884,12 +1884,12 @@ $matrix_states = array_keys($state_type_matrix);
       <?php if (!empty($geo)): ?>
       new Chart(document.getElementById('geoCasesChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode(array_map(fn($g) => $g['state_name'], $geo)) ?>, datasets: [{ label: 'Número de Víctimas', data: <?= json_encode(array_map(fn($g) => (int)$g['c'], $geo)) ?>, backgroundColor: '#c9a24d', borderRadius: 6 }] },
+        data: { labels: <?= json_encode(array_map(fn($g) => $g['state_name'], $geo)) ?>, datasets: [{ label: 'Número de Víctimas', data: <?= json_encode(array_map(fn($g) => (int)$g['c'], $geo)) ?>, backgroundColor: '#c9a24d', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
       new Chart(document.getElementById('geoAmountChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode(array_map(fn($g) => $g['state_name'], $geo_by_amount)) ?>, datasets: [{ label: 'Monto Total ($ MXN)', data: <?= json_encode(array_map(fn($g) => round($g['total_amt'], 2), $geo_by_amount)) ?>, backgroundColor: '#e06c75', borderRadius: 6 }] },
+        data: { labels: <?= json_encode(array_map(fn($g) => $g['state_name'], $geo_by_amount)) ?>, datasets: [{ label: 'Monto Total ($ MXN)', data: <?= json_encode(array_map(fn($g) => round($g['total_amt'], 2), $geo_by_amount)) ?>, backgroundColor: '#e06c75', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
       <?php endif; ?>
@@ -1917,7 +1917,7 @@ $matrix_states = array_keys($state_type_matrix);
         type: 'bar',
         data: {
           labels: <?= json_encode(array_map(fn($t) => $t['fraud_type'], $types_by_loss)) ?>,
-          datasets: [{ label: 'Pérdida Total ($ MXN)', data: <?= json_encode(array_map(fn($t) => round($t['total_amt'], 2), $types_by_loss)) ?>, backgroundColor: '#e06c75', borderRadius: 6 }]
+          datasets: [{ label: 'Pérdida Total ($ MXN)', data: <?= json_encode(array_map(fn($t) => round($t['total_amt'], 2), $types_by_loss)) ?>, backgroundColor: '#e06c75', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }]
         },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
