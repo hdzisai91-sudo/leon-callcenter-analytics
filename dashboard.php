@@ -558,6 +558,7 @@ $matrix_states = array_keys($state_type_matrix);
     .table-responsive { overflow-x: auto; }
     .data-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; text-align: left; }
     .data-table th { background: var(--card); color: var(--text-muted); font-weight: 600; padding: 12px 14px; border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.04em; }
+    .matriz-table td:not(:first-child), .matriz-table th:not(:first-child) { text-align: center; }
     .data-table td { padding: 14px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); color: var(--text); }
     .data-table tbody tr:hover { background: var(--card-hover); }
     .mono-gold { font-family: 'IBM Plex Mono', monospace; color: var(--gold-hover); font-weight: 600; }
@@ -1235,7 +1236,7 @@ $matrix_states = array_keys($state_type_matrix);
           <div><h3>1. Edad × Tipo de Fraude</h3><p>Número de casos por rango de edad y modalidad de fraude.</p></div>
         </div>
         <div class="table-responsive">
-          <table class="data-table">
+          <table class="data-table matriz-table">
             <thead>
               <tr>
                 <th>Rango de Edad</th>
@@ -1264,7 +1265,7 @@ $matrix_states = array_keys($state_type_matrix);
           <div><h3>2. Género × Tipo de Fraude</h3><p>Número de casos por género y modalidad de fraude.</p></div>
         </div>
         <div class="table-responsive">
-          <table class="data-table">
+          <table class="data-table matriz-table">
             <thead>
               <tr>
                 <th>Género</th>
@@ -1293,7 +1294,7 @@ $matrix_states = array_keys($state_type_matrix);
           <div><h3>3. Estado × Tipo de Fraude</h3><p>Número de casos por estado/región y modalidad de fraude.</p></div>
         </div>
         <div class="table-responsive">
-          <table class="data-table">
+          <table class="data-table matriz-table">
             <thead>
               <tr>
                 <th>Estado/Región</th>
@@ -1322,7 +1323,7 @@ $matrix_states = array_keys($state_type_matrix);
         <section class="table-card">
           <div class="table-header"><div><h3>4. Estado × Monto Perdido</h3><p>Total y promedio de pérdida por estado/región.</p></div></div>
           <div class="table-responsive">
-            <table class="data-table">
+            <table class="data-table matriz-table">
               <thead><tr><th>Estado</th><th>Total Perdido</th><th>Promedio</th></tr></thead>
               <tbody>
                 <?php foreach ($geo_by_amount as $g): ?>
@@ -1341,7 +1342,7 @@ $matrix_states = array_keys($state_type_matrix);
         <section class="table-card">
           <div class="table-header"><div><h3>8. Estado × Número de Víctimas</h3><p>Cantidad de víctimas por estado/región.</p></div></div>
           <div class="table-responsive">
-            <table class="data-table">
+            <table class="data-table matriz-table">
               <thead><tr><th>Estado</th><th>Núm. Víctimas</th><th>% del Total</th></tr></thead>
               <tbody>
                 <?php foreach ($geo as $g): ?>
@@ -1360,7 +1361,7 @@ $matrix_states = array_keys($state_type_matrix);
         <section class="table-card">
           <div class="table-header"><div><h3>5. Edad × Monto Perdido</h3><p>Total y promedio de pérdida por rango de edad.</p></div></div>
           <div class="table-responsive">
-            <table class="data-table">
+            <table class="data-table matriz-table">
               <thead><tr><th>Rango de Edad</th><th>Total Perdido</th><th>Promedio</th></tr></thead>
               <tbody>
                 <?php foreach ($age_buckets as $label => $b): ?>
@@ -1379,7 +1380,7 @@ $matrix_states = array_keys($state_type_matrix);
         <section class="table-card">
           <div class="table-header"><div><h3>6. Género × Monto Perdido</h3><p>Total y promedio de pérdida por género.</p></div></div>
           <div class="table-responsive">
-            <table class="data-table">
+            <table class="data-table matriz-table">
               <thead><tr><th>Género</th><th>Total Perdido</th><th>Promedio</th></tr></thead>
               <tbody>
                 <?php foreach ($gender_stats as $g => $s): ?>
@@ -1398,7 +1399,7 @@ $matrix_states = array_keys($state_type_matrix);
         <section class="table-card">
           <div class="table-header"><div><h3>7. Tipo de Fraude × Monto Perdido</h3><p>Total y promedio de pérdida por modalidad.</p></div></div>
           <div class="table-responsive">
-            <table class="data-table">
+            <table class="data-table matriz-table">
               <thead><tr><th>Modalidad</th><th>Total Perdido</th><th>Promedio</th></tr></thead>
               <tbody>
                 <?php foreach ($types_by_loss as $t): ?>
@@ -1809,8 +1810,8 @@ $matrix_states = array_keys($state_type_matrix);
       <?php if (!empty($reason_labels)): ?>
       new Chart(document.getElementById('reasonsBarChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode($reason_labels) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode($reason_counts) ?>, backgroundColor: palette, borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
-        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        data: { labels: <?= json_encode($reason_labels) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode($reason_counts) ?>, backgroundColor: '#c9a24d', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
       <?php endif; ?>
 
@@ -1826,7 +1827,7 @@ $matrix_states = array_keys($state_type_matrix);
       new Chart(document.getElementById('callsByStateChart'), {
         type: 'bar',
         data: { labels: <?= json_encode(array_map(fn($r) => $r['state_name'], $calls_by_state)) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode(array_map(fn($r) => (int)$r['c'], $calls_by_state)) ?>, backgroundColor: '#4fa3a0', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
-        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
       <?php endif; ?>
 
@@ -1849,8 +1850,8 @@ $matrix_states = array_keys($state_type_matrix);
     function initForenseCharts() {
       <?php if ($stat_count > 0): ?>
       new Chart(document.getElementById('lossRangesBarChart'), {
-        type: 'bar',
-        data: { labels: <?= json_encode($range_labels) ?>, datasets: [{ label: 'Número de Casos', data: <?= json_encode($range_counts) ?>, backgroundColor: palette, borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
+        type: 'line',
+        data: { labels: <?= json_encode($range_labels) ?>, datasets: [{ label: 'Número de Casos', data: <?= json_encode($range_counts) ?>, borderColor: '#c9a24d', backgroundColor: 'rgba(201, 162, 77, 0.15)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#c9a24d' }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: 'Cantidad de Casos' } } } }
       });
       new Chart(document.getElementById('lossRangesDonutChart'), {
@@ -1872,8 +1873,8 @@ $matrix_states = array_keys($state_type_matrix);
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
       });
       new Chart(document.getElementById('victimLossByAgeChart'), {
-        type: 'bar',
-        data: { labels: <?= json_encode($age_labels) ?>, datasets: [{ label: 'Pérdida Promedio ($ MXN)', data: <?= json_encode($age_avg_loss) ?>, backgroundColor: ['#4fa3a0', '#c9a24d', '#e06c75', '#98c379', '#61afef', '#c678dd', '#f39c12'], borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
+        type: 'line',
+        data: { labels: <?= json_encode($age_labels) ?>, datasets: [{ label: 'Pérdida Promedio ($ MXN)', data: <?= json_encode($age_avg_loss) ?>, borderColor: '#c678dd', backgroundColor: 'rgba(198, 120, 221, 0.15)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#c678dd' }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: val => '$' + (val/1000) + 'k' } } } }
       });
       <?php endif; ?>
@@ -1885,12 +1886,12 @@ $matrix_states = array_keys($state_type_matrix);
       new Chart(document.getElementById('geoCasesChart'), {
         type: 'bar',
         data: { labels: <?= json_encode(array_map(fn($g) => $g['state_name'], $geo)) ?>, datasets: [{ label: 'Número de Víctimas', data: <?= json_encode(array_map(fn($g) => (int)$g['c'], $geo)) ?>, backgroundColor: '#c9a24d', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
-        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
       new Chart(document.getElementById('geoAmountChart'), {
         type: 'bar',
         data: { labels: <?= json_encode(array_map(fn($g) => $g['state_name'], $geo_by_amount)) ?>, datasets: [{ label: 'Monto Total ($ MXN)', data: <?= json_encode(array_map(fn($g) => round($g['total_amt'], 2), $geo_by_amount)) ?>, backgroundColor: '#e06c75', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
-        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
       <?php endif; ?>
     }
@@ -1919,7 +1920,7 @@ $matrix_states = array_keys($state_type_matrix);
           labels: <?= json_encode(array_map(fn($t) => $t['fraud_type'], $types_by_loss)) ?>,
           datasets: [{ label: 'Pérdida Total ($ MXN)', data: <?= json_encode(array_map(fn($t) => round($t['total_amt'], 2), $types_by_loss)) ?>, backgroundColor: '#e06c75', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }]
         },
-        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
       <?php endif; ?>
     }
