@@ -85,6 +85,204 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["
 }
 
 /* =========================================================================
+   MAPEO DE CÓDIGO DE ÁREA (EE.UU./Canadá) A ESTADO
+   Cobertura amplia de códigos comunes; lo que no se reconozca cae en
+   "Estado No Identificado" para no perder el registro.
+   ========================================================================= */
+function areaCodeToState($phone) {
+    $digits = preg_replace('/\D/', '', $phone);
+    if (strlen($digits) === 11 && $digits[0] === '1') $digits = substr($digits, 1);
+    if (strlen($digits) < 10) return null;
+    $area = substr($digits, 0, 3);
+
+    $map = [
+        // California
+        '209'=>'California (CA)','213'=>'California (CA)','310'=>'California (CA)','323'=>'California (CA)',
+        '408'=>'California (CA)','415'=>'California (CA)','510'=>'California (CA)','530'=>'California (CA)',
+        '559'=>'California (CA)','562'=>'California (CA)','619'=>'California (CA)','626'=>'California (CA)',
+        '650'=>'California (CA)','661'=>'California (CA)','707'=>'California (CA)','714'=>'California (CA)',
+        '760'=>'California (CA)','805'=>'California (CA)','818'=>'California (CA)','831'=>'California (CA)',
+        '858'=>'California (CA)','909'=>'California (CA)','916'=>'California (CA)','925'=>'California (CA)',
+        '949'=>'California (CA)','951'=>'California (CA)',
+        // Texas
+        '210'=>'Texas (TX)','214'=>'Texas (TX)','254'=>'Texas (TX)','281'=>'Texas (TX)','325'=>'Texas (TX)',
+        '346'=>'Texas (TX)','361'=>'Texas (TX)','409'=>'Texas (TX)','430'=>'Texas (TX)','432'=>'Texas (TX)',
+        '469'=>'Texas (TX)','512'=>'Texas (TX)','682'=>'Texas (TX)','713'=>'Texas (TX)','726'=>'Texas (TX)',
+        '806'=>'Texas (TX)','817'=>'Texas (TX)','830'=>'Texas (TX)','832'=>'Texas (TX)','903'=>'Texas (TX)',
+        '915'=>'Texas (TX)','936'=>'Texas (TX)','940'=>'Texas (TX)','956'=>'Texas (TX)','972'=>'Texas (TX)',
+        '979'=>'Texas (TX)',
+        // Florida
+        '239'=>'Florida (FL)','305'=>'Florida (FL)','321'=>'Florida (FL)','352'=>'Florida (FL)',
+        '386'=>'Florida (FL)','407'=>'Florida (FL)','561'=>'Florida (FL)','727'=>'Florida (FL)',
+        '754'=>'Florida (FL)','772'=>'Florida (FL)','786'=>'Florida (FL)','813'=>'Florida (FL)',
+        '850'=>'Florida (FL)','863'=>'Florida (FL)','904'=>'Florida (FL)','941'=>'Florida (FL)',
+        '954'=>'Florida (FL)',
+        // New York
+        '212'=>'New York (NY)','315'=>'New York (NY)','347'=>'New York (NY)','516'=>'New York (NY)',
+        '518'=>'New York (NY)','585'=>'New York (NY)','607'=>'New York (NY)','631'=>'New York (NY)',
+        '646'=>'New York (NY)','680'=>'New York (NY)','716'=>'New York (NY)','718'=>'New York (NY)',
+        '845'=>'New York (NY)','914'=>'New York (NY)','917'=>'New York (NY)','929'=>'New York (NY)',
+        // Illinois
+        '217'=>'Illinois (IL)','224'=>'Illinois (IL)','309'=>'Illinois (IL)','312'=>'Illinois (IL)',
+        '331'=>'Illinois (IL)','618'=>'Illinois (IL)','630'=>'Illinois (IL)','708'=>'Illinois (IL)',
+        '773'=>'Illinois (IL)','779'=>'Illinois (IL)','815'=>'Illinois (IL)','847'=>'Illinois (IL)',
+        '872'=>'Illinois (IL)',
+        // Pennsylvania
+        '215'=>'Pennsylvania (PA)','223'=>'Pennsylvania (PA)','267'=>'Pennsylvania (PA)','272'=>'Pennsylvania (PA)',
+        '412'=>'Pennsylvania (PA)','445'=>'Pennsylvania (PA)','484'=>'Pennsylvania (PA)','570'=>'Pennsylvania (PA)',
+        '610'=>'Pennsylvania (PA)','717'=>'Pennsylvania (PA)','724'=>'Pennsylvania (PA)','814'=>'Pennsylvania (PA)',
+        '878'=>'Pennsylvania (PA)',
+        // Georgia
+        '229'=>'Georgia (GA)','404'=>'Georgia (GA)','470'=>'Georgia (GA)','478'=>'Georgia (GA)',
+        '678'=>'Georgia (GA)','706'=>'Georgia (GA)','762'=>'Georgia (GA)','770'=>'Georgia (GA)',
+        '912'=>'Georgia (GA)',
+        // Ohio
+        '216'=>'Ohio (OH)','220'=>'Ohio (OH)','234'=>'Ohio (OH)','330'=>'Ohio (OH)','380'=>'Ohio (OH)',
+        '419'=>'Ohio (OH)','440'=>'Ohio (OH)','513'=>'Ohio (OH)','567'=>'Ohio (OH)','614'=>'Ohio (OH)',
+        '740'=>'Ohio (OH)','937'=>'Ohio (OH)',
+        // Illinois/Minnesota
+        '218'=>'Minnesota (MN)','320'=>'Minnesota (MN)','507'=>'Minnesota (MN)','612'=>'Minnesota (MN)',
+        '651'=>'Minnesota (MN)','763'=>'Minnesota (MN)','952'=>'Minnesota (MN)',
+        // Tennessee
+        '423'=>'Tennessee (TN)','615'=>'Tennessee (TN)','629'=>'Tennessee (TN)','731'=>'Tennessee (TN)',
+        '865'=>'Tennessee (TN)','901'=>'Tennessee (TN)','931'=>'Tennessee (TN)',
+        // Arizona
+        '480'=>'Arizona (AZ)','520'=>'Arizona (AZ)','602'=>'Arizona (AZ)','623'=>'Arizona (AZ)','928'=>'Arizona (AZ)',
+        // North Carolina
+        '252'=>'North Carolina (NC)','336'=>'North Carolina (NC)','704'=>'North Carolina (NC)',
+        '743'=>'North Carolina (NC)','828'=>'North Carolina (NC)','910'=>'North Carolina (NC)',
+        '919'=>'North Carolina (NC)','980'=>'North Carolina (NC)','984'=>'North Carolina (NC)',
+        // Michigan
+        '231'=>'Michigan (MI)','248'=>'Michigan (MI)','269'=>'Michigan (MI)','313'=>'Michigan (MI)',
+        '517'=>'Michigan (MI)','586'=>'Michigan (MI)','616'=>'Michigan (MI)','734'=>'Michigan (MI)',
+        '810'=>'Michigan (MI)','906'=>'Michigan (MI)','947'=>'Michigan (MI)','989'=>'Michigan (MI)',
+        // Arizona/Nevada/Washington/others (muestra representativa)
+        '702'=>'Nevada (NV)','725'=>'Nevada (NV)','775'=>'Nevada (NV)',
+        '206'=>'Washington (WA)','253'=>'Washington (WA)','360'=>'Washington (WA)','425'=>'Washington (WA)',
+        '509'=>'Washington (WA)',
+        '303'=>'Colorado (CO)','719'=>'Colorado (CO)','720'=>'Colorado (CO)','970'=>'Colorado (CO)',
+        '602'=>'Arizona (AZ)',
+        '617'=>'Massachusetts (MA)','339'=>'Massachusetts (MA)','508'=>'Massachusetts (MA)',
+        '774'=>'Massachusetts (MA)','781'=>'Massachusetts (MA)','857'=>'Massachusetts (MA)','978'=>'Massachusetts (MA)',
+        '804'=>'Virginia (VA)','703'=>'Virginia (VA)','757'=>'Virginia (VA)','540'=>'Virginia (VA)','571'=>'Virginia (VA)',
+        '202'=>'Washington DC',
+        '602'=>'Arizona (AZ)',
+    ];
+
+    return $map[$area] ?? 'Estado No Identificado';
+}
+
+function parseDurationToSeconds($dur) {
+    $parts = array_map('intval', explode(':', trim($dur)));
+    if (count($parts) === 3) return $parts[0]*3600 + $parts[1]*60 + $parts[2];
+    if (count($parts) === 2) return $parts[0]*60 + $parts[1];
+    return (int)$dur;
+}
+
+function dayPartFromHour($hour) {
+    $hour = (int)$hour;
+    if ($hour >= 0 && $hour < 6) return 'Madrugada (0-6h)';
+    if ($hour >= 6 && $hour < 12) return 'Mañana (6-12h)';
+    if ($hour >= 12 && $hour < 18) return 'Tarde (12-18h)';
+    return 'Noche (18-24h)';
+}
+
+// Calcula cuántos meses de historia real hay entre la fecha más antigua y la más reciente,
+// con un tope máximo (por defecto 6), para no rellenar la gráfica con meses vacíos.
+function monthsOfHistory($earliestDateStr, $referenceTs, $maxMonths = 6) {
+    if (!$earliestDateStr) return 1;
+    $earliestTs = strtotime($earliestDateStr);
+    $diff = ((int)date('Y', $referenceTs) - (int)date('Y', $earliestTs)) * 12
+        + ((int)date('n', $referenceTs) - (int)date('n', $earliestTs)) + 1;
+    return max(1, min($maxMonths, $diff));
+}
+
+// PROCESAR IMPORTACIÓN MASIVA DE LLAMADAS DESDE CSV
+$import_summary = null;
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] === "import_calls_csv") {
+    $csv_ext_ok = isset($_FILES['csv_file']) && strtolower(pathinfo($_FILES['csv_file']['name'], PATHINFO_EXTENSION)) === 'csv';
+
+    if (!$csv_ext_ok) {
+        $_SESSION["flash_msg"] = "Solo se permiten archivos con extensión .csv";
+        $_SESSION["flash_type"] = "danger";
+        header("Location: " . $_SERVER["PHP_SELF"]);
+        exit;
+    }
+
+    if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
+        $handle = fopen($_FILES['csv_file']['tmp_name'], 'r');
+        $inserted = 0;
+        $skipped = 0;
+        $unidentified_states = [];
+
+        if ($handle) {
+            while (($row = fgetcsv($handle)) !== false) {
+                // Columnas esperadas: [0]Tipo [1]Teléfono [2]Nombre [3]Fecha [4]Hora [5]TipoLlamada [6]Estatus [7]Descripción [8]Duración
+                if (count($row) < 9) { $skipped++; continue; }
+
+                $phone = trim($row[1]);
+                $date_raw = trim($row[3]);
+                $time_raw = trim($row[4]);
+                $status_raw = trim($row[6]);
+                $duration_raw = trim($row[8]);
+
+                // Saltar filas con número inválido (#ERROR!, vacío, etc.)
+                $digits_check = preg_replace('/\D/', '', $phone);
+                if (strlen($digits_check) < 10) { $skipped++; continue; }
+
+                // Fecha: quitar prefijo de día de la semana ("Sat 01/31/2026" -> "01/31/2026")
+                $date_clean = preg_replace('/^[A-Za-z]{3}\s+/', '', $date_raw);
+                $date_ts = strtotime($date_clean);
+                if (!$date_ts) { $skipped++; continue; }
+                $call_date_val = date('Y-m-d', $date_ts);
+
+                // Hora: "10:23 PM" -> "22:23:00"
+                $time_ts = strtotime($time_raw);
+                if (!$time_ts) { $skipped++; continue; }
+                $call_time_val = date('H:i:s', $time_ts);
+                $hour_val = (int)date('H', $time_ts);
+
+                $duration_val = parseDurationToSeconds($duration_raw);
+                $state_val = areaCodeToState($phone);
+                if ($state_val === 'Estado No Identificado') {
+                    $unidentified_states[$phone] = true;
+                }
+
+                $status_map = [
+                    'Accepted' => 'Llamada Contestada',
+                    'Call connected' => 'Llamada Contestada',
+                    'Missed' => 'Llamada Perdida',
+                    'Hang Up' => 'Llamada Colgada por el Cliente',
+                ];
+                $reason_val = $status_map[$status_raw] ?? 'Otros';
+
+                $day_slot_val = dayPartFromHour($hour_val);
+
+                try {
+                    $stmt = $pdo->prepare("INSERT INTO call_records 
+                        (call_date, call_time, duration_seconds, state_name, contact_reason, day_slot, is_fraud_report) 
+                        VALUES (?, ?, ?, ?, ?, ?, 0)");
+                    $stmt->execute([$call_date_val, $call_time_val, $duration_val, $state_val, $reason_val, $day_slot_val]);
+                    $inserted++;
+                } catch (PDOException $e) {
+                    $skipped++;
+                }
+            }
+            fclose($handle);
+        }
+
+        $extra = count($unidentified_states) > 0 ? " ($" . count($unidentified_states) . " números con código de área no reconocido, marcados como 'Estado No Identificado')" : "";
+        $_SESSION["flash_msg"] = "Importación completada: $inserted llamadas agregadas, $skipped filas omitidas.$extra";
+        $_SESSION["flash_type"] = "success";
+        header("Location: " . $_SERVER["PHP_SELF"]);
+        exit;
+    } else {
+        $msg = "No se pudo leer el archivo CSV. Verifica que el archivo se haya subido correctamente.";
+        $msgType = "danger";
+    }
+}
+
+/* =========================================================================
    CONSULTAS A MYSQL — TODOS LOS DATOS DEL DASHBOARD SE CALCULAN AQUÍ
    ========================================================================= */
 
@@ -124,10 +322,19 @@ try {
 } catch (Exception $e) { $distinct_months = 0; }
 $avg_monthly_calls = $distinct_months > 0 ? round($total_calls / $distinct_months) : 0;
 
-// --- Crecimiento: últimos 90 días vs los 90 anteriores ---
+// --- Crecimiento: últimos 90 días vs los 90 anteriores (con datos reales) ---
 try {
-    $recent90 = (int)($pdo->query("SELECT COUNT(*) as c FROM call_records WHERE call_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)")->fetch()['c'] ?? 0);
-    $prev90 = (int)($pdo->query("SELECT COUNT(*) as c FROM call_records WHERE call_date >= DATE_SUB(CURDATE(), INTERVAL 180 DAY) AND call_date < DATE_SUB(CURDATE(), INTERVAL 90 DAY)")->fetch()['c'] ?? 0);
+    $latest_call_for_growth = $pdo->query("SELECT MAX(call_date) as m FROM call_records")->fetch()['m'];
+    $growth_reference_date = $latest_call_for_growth ? strtotime($latest_call_for_growth) : time();
+    $growth_ref_str = date('Y-m-d', $growth_reference_date);
+    $growth_90_start = date('Y-m-d', strtotime("-90 days", $growth_reference_date));
+    $growth_180_start = date('Y-m-d', strtotime("-180 days", $growth_reference_date));
+    $stmt1 = $pdo->prepare("SELECT COUNT(*) as c FROM call_records WHERE call_date >= ? AND call_date <= ?");
+    $stmt1->execute([$growth_90_start, $growth_ref_str]);
+    $recent90 = (int)($stmt1->fetch()['c'] ?? 0);
+    $stmt2 = $pdo->prepare("SELECT COUNT(*) as c FROM call_records WHERE call_date >= ? AND call_date < ?");
+    $stmt2->execute([$growth_180_start, $growth_90_start]);
+    $prev90 = (int)($stmt2->fetch()['c'] ?? 0);
     $growth_pct = $prev90 > 0 ? round((($recent90 - $prev90) / $prev90) * 100, 1) : null;
 } catch (Exception $e) { $growth_pct = null; }
 
@@ -159,33 +366,65 @@ try {
     $lowest_day = $lowest_day_row ? ($dow_map[$lowest_day_row['dow']] ?? $lowest_day_row['dow']) : 'N/D';
 } catch (Exception $e) { $lowest_day = 'N/D'; }
 
+// --- Llamadas por día de la semana (Lunes a Domingo, para la gráfica semanal) ---
+$weekday_order_en = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+try {
+    $weekday_rows = $pdo->query("SELECT DAYNAME(call_date) as dow, COUNT(*) as c FROM call_records GROUP BY DAYNAME(call_date)")->fetchAll();
+} catch (Exception $e) { $weekday_rows = []; }
+$weekday_lookup = [];
+foreach ($weekday_rows as $row) { $weekday_lookup[$row['dow']] = (int)$row['c']; }
+$weekday_labels = array_map(fn($d) => $dow_map[$d], $weekday_order_en);
+$weekday_values = array_map(fn($d) => $weekday_lookup[$d] ?? 0, $weekday_order_en);
+$weekday_max = !empty($weekday_values) ? max($weekday_values) : 0;
+$weekday_min_nonzero = !empty(array_filter($weekday_values, fn($v) => $v > 0)) ? min(array_filter($weekday_values, fn($v) => $v > 0)) : 0;
+
 // --- Llamadas por estado de distribución ---
 try {
-    $calls_by_state = $pdo->query("SELECT state_name, COUNT(*) as c FROM call_records GROUP BY state_name ORDER BY c DESC")->fetchAll();
+    $calls_by_state = $pdo->query("SELECT state_name, COUNT(*) as c FROM call_records GROUP BY state_name ORDER BY c DESC LIMIT 15")->fetchAll();
 } catch (Exception $e) { $calls_by_state = []; }
 $calls_by_state_total = array_sum(array_map(fn($r) => (int)$r['c'], $calls_by_state));
 
-// --- Evolución mensual de llamadas (últimos 6 meses) ---
+// --- Evolución mensual de llamadas (hasta 6 meses con datos reales, sin relleno vacío) ---
+try {
+    $call_date_range = $pdo->query("SELECT MIN(call_date) as mn, MAX(call_date) as mx FROM call_records")->fetch();
+    $earliest_call_date = $call_date_range['mn'] ?? null;
+    $latest_call_date = $call_date_range['mx'] ?? null;
+} catch (Exception $e) { $earliest_call_date = null; $latest_call_date = null; }
+$evo_reference_date = $latest_call_date ? strtotime($latest_call_date) : time();
+$months_of_history = monthsOfHistory($earliest_call_date, $evo_reference_date);
+
 $calls_evo_labels = [];
 $calls_evo_keys = [];
-for ($i = 5; $i >= 0; $i--) {
-    $calls_evo_labels[] = ucfirst(date('M Y', strtotime("-$i months")));
-    $calls_evo_keys[] = date('Y-m', strtotime("-$i months"));
+for ($i = $months_of_history - 1; $i >= 0; $i--) {
+    $calls_evo_labels[] = ucfirst(date('M Y', strtotime("-$i months", $evo_reference_date)));
+    $calls_evo_keys[] = date('Y-m', strtotime("-$i months", $evo_reference_date));
 }
 try {
-    $calls_monthly_rows = $pdo->query("SELECT DATE_FORMAT(call_date, '%Y-%m') as ym, COUNT(*) as c FROM call_records WHERE call_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) GROUP BY ym")->fetchAll();
+    $evo_window_start = date('Y-m-01', strtotime("-" . ($months_of_history - 1) . " months", $evo_reference_date));
+    $stmt = $pdo->prepare("SELECT DATE_FORMAT(call_date, '%Y-%m') as ym, COUNT(*) as c FROM call_records WHERE call_date >= ? GROUP BY ym");
+    $stmt->execute([$evo_window_start]);
+    $calls_monthly_rows = $stmt->fetchAll();
 } catch (Exception $e) { $calls_monthly_rows = []; }
 $calls_monthly_lookup = [];
 foreach ($calls_monthly_rows as $r) { $calls_monthly_lookup[$r['ym']] = (int)$r['c']; }
 $calls_evo_values = [];
 foreach ($calls_evo_keys as $ym) { $calls_evo_values[] = $calls_monthly_lookup[$ym] ?? 0; }
 
-// --- Evolución semanal (últimas 12 semanas): llamadas vs reportes de fraude ---
+// --- Evolución semanal (últimas 12 semanas con datos reales): llamadas vs reportes de fraude ---
+try {
+    $latest_call_for_week = $pdo->query("SELECT MAX(call_date) as m FROM call_records")->fetch()['m'];
+} catch (Exception $e) { $latest_call_for_week = null; }
+try {
+    $latest_fraud_for_week = $pdo->query("SELECT MAX(incident_date) as m FROM fraud_reports")->fetch()['m'];
+} catch (Exception $e) { $latest_fraud_for_week = null; }
+$week_reference_candidates = array_filter([$latest_call_for_week, $latest_fraud_for_week]);
+$week_reference_date = !empty($week_reference_candidates) ? strtotime(max($week_reference_candidates)) : time();
+
 $evolution_labels = [];
 $evolution_calls = [];
 $evolution_frauds = [];
 for ($i = 11; $i >= 0; $i--) {
-    $week_start = date('Y-m-d', strtotime("-$i weeks", strtotime('monday this week')));
+    $week_start = date('Y-m-d', strtotime("-$i weeks", strtotime('monday this week', $week_reference_date)));
     $week_end = date('Y-m-d', strtotime("$week_start +6 days"));
     $evolution_labels[] = date('d/m', strtotime($week_start));
     try {
@@ -247,16 +486,27 @@ foreach ($type_state_rows as $row) {
     }
 }
 
-// Evolución mensual por tipo (últimos 6 meses, top 5 tipos por volumen)
+// Evolución mensual por tipo (hasta 6 meses con datos reales, sin relleno vacío; top 5 tipos por volumen)
 $top5_types = array_slice(array_map(fn($t) => $t['fraud_type'], $types_by_count), 0, 5);
+try {
+    $fraud_date_range_type = $pdo->query("SELECT MIN(incident_date) as mn, MAX(incident_date) as mx FROM fraud_reports")->fetch();
+    $earliest_fraud_for_type = $fraud_date_range_type['mn'] ?? null;
+    $latest_fraud_for_type = $fraud_date_range_type['mx'] ?? null;
+} catch (Exception $e) { $earliest_fraud_for_type = null; $latest_fraud_for_type = null; }
+$type_evo_reference_date = $latest_fraud_for_type ? strtotime($latest_fraud_for_type) : time();
+$type_months_of_history = monthsOfHistory($earliest_fraud_for_type, $type_evo_reference_date);
+
 $evo_type_labels = [];
 $evo_type_keys = [];
-for ($i = 5; $i >= 0; $i--) {
-    $evo_type_labels[] = ucfirst(date('M Y', strtotime("-$i months")));
-    $evo_type_keys[] = date('Y-m', strtotime("-$i months"));
+for ($i = $type_months_of_history - 1; $i >= 0; $i--) {
+    $evo_type_labels[] = ucfirst(date('M Y', strtotime("-$i months", $type_evo_reference_date)));
+    $evo_type_keys[] = date('Y-m', strtotime("-$i months", $type_evo_reference_date));
 }
 try {
-    $monthly_type_rows = $pdo->query("SELECT fraud_type, DATE_FORMAT(incident_date, '%Y-%m') as ym, COUNT(*) as c FROM fraud_reports WHERE incident_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) GROUP BY fraud_type, ym")->fetchAll();
+    $type_window_start = date('Y-m-01', strtotime("-" . ($type_months_of_history - 1) . " months", $type_evo_reference_date)) . ' 00:00:00';
+    $stmt = $pdo->prepare("SELECT fraud_type, DATE_FORMAT(incident_date, '%Y-%m') as ym, COUNT(*) as c FROM fraud_reports WHERE incident_date >= ? GROUP BY fraud_type, ym");
+    $stmt->execute([$type_window_start]);
+    $monthly_type_rows = $stmt->fetchAll();
 } catch (Exception $e) { $monthly_type_rows = []; }
 $monthly_type_lookup = [];
 foreach ($monthly_type_rows as $row) {
@@ -283,10 +533,36 @@ usort($reasons_by_duration, fn($a, $b) => $b['avg_dur'] <=> $a['avg_dur']);
 $duration_labels = array_map(fn($r) => $r['contact_reason'], $reasons_by_duration);
 $duration_values = array_map(fn($r) => round($r['avg_dur'] / 60, 1), $reasons_by_duration);
 
+// Orden fijo solicitado para las gráficas de barras "Distribución por Motivo" y "TMO"
+// (el orden del donut de arriba y sus KPIs no se toca, siguen por volumen/duración)
+function reorderRowsByLabel($rows, $labelKey, $customOrder) {
+    $ordered = [];
+    foreach ($customOrder as $wanted) {
+        foreach ($rows as $row) {
+            if ($row[$labelKey] === $wanted) { $ordered[] = $row; break; }
+        }
+    }
+    foreach ($rows as $row) {
+        if (!in_array($row[$labelKey], $customOrder)) { $ordered[] = $row; }
+    }
+    return $ordered;
+}
+$custom_reason_order = ['Llamada Contestada', 'Llamada Perdida', 'Llamada Colgada por el Cliente', 'Otros'];
+$reasons_bar_ordered = reorderRowsByLabel($reasons, 'contact_reason', $custom_reason_order);
+$reason_labels_bar = array_map(fn($r) => $r['contact_reason'], $reasons_bar_ordered);
+$reason_counts_bar = array_map(fn($r) => (int)$r['c'], $reasons_bar_ordered);
+
+$duration_rows_ordered = reorderRowsByLabel($reasons_by_duration, 'contact_reason', $custom_reason_order);
+$duration_labels_ordered = array_map(fn($r) => $r['contact_reason'], $duration_rows_ordered);
+$duration_values_ordered = array_map(fn($r) => round($r['avg_dur'] / 60, 1), $duration_rows_ordered);
+
 $top_reason = $reasons[0] ?? null;
 $top_reason_pct = ($top_reason && $total_calls > 0) ? round(($top_reason['c'] / $total_calls) * 100, 1) : 0;
 $longest_reason = $reasons_by_duration[0] ?? null;
 $reason_pcts = array_map(fn($r) => $total_calls > 0 ? round(($r['c'] / $total_calls) * 100, 1) : 0, $reasons);
+
+// Misma paleta que donutPalette en el JS, para pintar la leyenda HTML de "Distribución Porcentual por Motivo"
+$donut_palette_php = ['#c9a24d', '#4fa3a0', '#e06c75', '#61afef', '#98c379', '#c678dd', '#f39c12', '#9b59b6', '#95a5a6', '#dfba69'];
 
 
 // Texto dinámico del banner de motivos (top 3)
@@ -411,15 +687,26 @@ foreach ($gender_stats as $g => $s) {
     $gender_predominant_type[$g] = array_key_first($types_copy);
 }
 
-// --- Evolución mensual por género (últimos 6 meses) ---
+// --- Evolución mensual por género (hasta 6 meses con datos reales, sin relleno vacío) ---
+try {
+    $fraud_date_range_gender = $pdo->query("SELECT MIN(incident_date) as mn, MAX(incident_date) as mx FROM fraud_reports")->fetch();
+    $earliest_fraud_for_gender = $fraud_date_range_gender['mn'] ?? null;
+    $latest_fraud_for_gender = $fraud_date_range_gender['mx'] ?? null;
+} catch (Exception $e) { $earliest_fraud_for_gender = null; $latest_fraud_for_gender = null; }
+$gender_evo_reference_date = $latest_fraud_for_gender ? strtotime($latest_fraud_for_gender) : time();
+$gender_months_of_history = monthsOfHistory($earliest_fraud_for_gender, $gender_evo_reference_date);
+
 $gender_evo_labels = [];
 $gender_evo_keys = [];
-for ($i = 5; $i >= 0; $i--) {
-    $gender_evo_labels[] = ucfirst(date('M Y', strtotime("-$i months")));
-    $gender_evo_keys[] = date('Y-m', strtotime("-$i months"));
+for ($i = $gender_months_of_history - 1; $i >= 0; $i--) {
+    $gender_evo_labels[] = ucfirst(date('M Y', strtotime("-$i months", $gender_evo_reference_date)));
+    $gender_evo_keys[] = date('Y-m', strtotime("-$i months", $gender_evo_reference_date));
 }
 try {
-    $gender_monthly_rows = $pdo->query("SELECT victim_gender, DATE_FORMAT(incident_date, '%Y-%m') as ym, COUNT(*) as c FROM fraud_reports WHERE incident_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) GROUP BY victim_gender, ym")->fetchAll();
+    $gender_window_start = date('Y-m-01', strtotime("-" . ($gender_months_of_history - 1) . " months", $gender_evo_reference_date)) . ' 00:00:00';
+    $stmt = $pdo->prepare("SELECT victim_gender, DATE_FORMAT(incident_date, '%Y-%m') as ym, COUNT(*) as c FROM fraud_reports WHERE incident_date >= ? GROUP BY victim_gender, ym");
+    $stmt->execute([$gender_window_start]);
+    $gender_monthly_rows = $stmt->fetchAll();
 } catch (Exception $e) { $gender_monthly_rows = []; }
 $gender_monthly_lookup = [];
 foreach ($gender_monthly_rows as $row) {
@@ -472,13 +759,15 @@ $matrix_states = array_keys($state_type_matrix);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="darkreader-lock">
   <title>León SA de CV — Sistema de Inteligencia & Fraudes</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
   
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 
   <style>
     :root {
@@ -739,7 +1028,10 @@ $matrix_states = array_keys($state_type_matrix);
           <h1>Análisis de Operaciones & Motivos de Contacto</h1>
           <p>Determinación de volumen, horarios críticos y clasificación exacta de por qué llaman los clientes.</p>
         </div>
-        <button class="btn-primary" onclick="openCallModal()">+ Registrar Llamada</button>
+        <div style="display:flex; flex-direction:row; flex-wrap:nowrap; gap:10px;">
+          <button class="btn-primary" onclick="openCallModal()" style="white-space:nowrap;">+ Registrar Llamada</button>
+          <button class="btn-primary" onclick="openImportModal()" style="white-space:nowrap; background:linear-gradient(135deg, #4fa3a0, #6cc2bf);">+ Importar CSV</button>
+        </div>
       </div>
 
       <div class="alert-box-extra">
@@ -818,7 +1110,7 @@ $matrix_states = array_keys($state_type_matrix);
             <h3>Llamadas por Estado de Distribución</h3>
             <span class="badge-tag">Volumen Geográfico</span>
           </div>
-          <div class="chart-container" style="height:300px;">
+          <div class="chart-container" style="height:420px;">
             <?php if (empty($calls_by_state)): ?>
               <div class="empty-state">Sin llamadas registradas todavía.</div>
             <?php else: ?>
@@ -831,23 +1123,47 @@ $matrix_states = array_keys($state_type_matrix);
             <h3>Distribución Porcentual por Motivo</h3>
             <span class="badge-tag">% del Total</span>
           </div>
-          <div class="chart-container" style="height:300px;">
+          <div class="chart-container" style="height:230px;">
             <?php if (empty($reason_labels)): ?>
               <div class="empty-state">Sin llamadas registradas todavía.</div>
             <?php else: ?>
               <canvas id="reasonsPctChart"></canvas>
             <?php endif; ?>
           </div>
+          <?php if (!empty($reason_labels)): ?>
+          <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:14px; margin-top:14px; padding-top:10px; border-top:1px solid var(--border);">
+            <?php foreach ($reason_labels as $i => $label): ?>
+              <div style="display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--text); font-weight:600;">
+                <span style="width:12px; height:12px; border-radius:3px; background:<?= htmlspecialchars($donut_palette_php[$i % count($donut_palette_php)]) ?>; flex-shrink:0;"></span>
+                <span><?= htmlspecialchars($label) ?> (<?= $reason_pcts[$i] ?>%)</span>
+              </div>
+            <?php endforeach; ?>
+          </div>
+          <?php endif; ?>
         </div>
       </section>
 
       <section class="chart-card">
         <div class="chart-header">
           <h3>Evolución Mensual de Llamadas</h3>
-          <span class="badge-tag">Últimos 6 meses</span>
+          <span class="badge-tag"><?= $months_of_history == 1 ? 'Último mes' : "Últimos $months_of_history meses" ?></span>
         </div>
         <div class="chart-container">
           <canvas id="callsMonthlyEvoChart"></canvas>
+        </div>
+      </section>
+
+      <section class="chart-card">
+        <div class="chart-header">
+          <h3>Llamadas por Día de la Semana</h3>
+          <span class="badge-tag">Lunes a Domingo</span>
+        </div>
+        <div class="chart-container">
+          <?php if (empty($weekday_values) || $weekday_max === 0): ?>
+            <div class="empty-state">Sin llamadas registradas todavía.</div>
+          <?php else: ?>
+            <canvas id="weekdayCallsChart"></canvas>
+          <?php endif; ?>
         </div>
       </section>
     </div>
@@ -1141,7 +1457,7 @@ $matrix_states = array_keys($state_type_matrix);
         <div class="chart-card">
           <div class="chart-header">
             <h3>Evolución Mensual por Modalidad (Top 5)</h3>
-            <span class="badge-tag">Últimos 6 meses</span>
+            <span class="badge-tag"><?= $type_months_of_history == 1 ? 'Último mes' : "Últimos $type_months_of_history meses" ?></span>
           </div>
           <div class="chart-container">
             <?php if (empty($evo_type_datasets) || $modalidades_total === 0): ?>
@@ -1544,7 +1860,7 @@ $matrix_states = array_keys($state_type_matrix);
       <section class="chart-card">
         <div class="chart-header">
           <h3>Género y Evolución</h3>
-          <span class="badge-tag">Últimos 6 meses</span>
+          <span class="badge-tag"><?= $gender_months_of_history == 1 ? 'Último mes' : "Últimos $gender_months_of_history meses" ?></span>
         </div>
         <div class="chart-container">
           <?php if (empty($gender_evo_datasets) || $total_victims === 0): ?>
@@ -1619,6 +1935,18 @@ $matrix_states = array_keys($state_type_matrix);
               <option value="Illinois (IL)">Illinois (IL)</option>
               <option value="Pennsylvania (PA)">Pennsylvania (PA)</option>
               <option value="Georgia (GA)">Georgia (GA)</option>
+              <option value="Ohio (OH)">Ohio (OH)</option>
+              <option value="Minnesota (MN)">Minnesota (MN)</option>
+              <option value="Tennessee (TN)">Tennessee (TN)</option>
+              <option value="Arizona (AZ)">Arizona (AZ)</option>
+              <option value="North Carolina (NC)">North Carolina (NC)</option>
+              <option value="Michigan (MI)">Michigan (MI)</option>
+              <option value="Nevada (NV)">Nevada (NV)</option>
+              <option value="Washington (WA)">Washington (WA)</option>
+              <option value="Colorado (CO)">Colorado (CO)</option>
+              <option value="Massachusetts (MA)">Massachusetts (MA)</option>
+              <option value="Virginia (VA)">Virginia (VA)</option>
+              <option value="Washington DC">Washington DC</option>
               <option value="Ciudad de México">Ciudad de México</option>
               <option value="Estado de México">Estado de México</option>
               <option value="Jalisco">Jalisco</option>
@@ -1694,19 +2022,33 @@ $matrix_states = array_keys($state_type_matrix);
         <div class="form-grid-2">
           <div class="form-group">
             <label>Estado de Residencia *</label>
-            <select name="state_name_call" class="form-select" required>
-              <option value="California (CA)">California (CA)</option>
-              <option value="Texas (TX)">Texas (TX)</option>
-              <option value="Florida (FL)">Florida (FL)</option>
-              <option value="New York (NY)">New York (NY)</option>
-              <option value="Illinois (IL)">Illinois (IL)</option>
-              <option value="Pennsylvania (PA)">Pennsylvania (PA)</option>
-              <option value="Georgia (GA)">Georgia (GA)</option>
-              <option value="Ciudad de México">Ciudad de México</option>
-              <option value="Estado de México">Estado de México</option>
-              <option value="Jalisco">Jalisco</option>
-              <option value="Nuevo León">Nuevo León</option>
-            </select>
+            <input type="text" name="state_name_call" class="form-input" list="states_datalist_call" placeholder="Escribe el estado (ej. Texas (TX))" autocomplete="off" required>
+            <datalist id="states_datalist_call">
+              <option value="California (CA)">
+              <option value="Texas (TX)">
+              <option value="Florida (FL)">
+              <option value="New York (NY)">
+              <option value="Illinois (IL)">
+              <option value="Pennsylvania (PA)">
+              <option value="Georgia (GA)">
+              <option value="Ohio (OH)">
+              <option value="Minnesota (MN)">
+              <option value="Tennessee (TN)">
+              <option value="Arizona (AZ)">
+              <option value="North Carolina (NC)">
+              <option value="Michigan (MI)">
+              <option value="Nevada (NV)">
+              <option value="Washington (WA)">
+              <option value="Colorado (CO)">
+              <option value="Massachusetts (MA)">
+              <option value="Virginia (VA)">
+              <option value="Washington DC">
+              <option value="Ciudad de México">
+              <option value="Estado de México">
+              <option value="Jalisco">
+              <option value="Nuevo León">
+              <option value="Estado No Identificado">
+            </datalist>
           </div>
           <div class="form-group">
             <label>Motivo de Contacto *</label>
@@ -1738,15 +2080,47 @@ $matrix_states = array_keys($state_type_matrix);
     </div>
   </div>
 
+  <!-- MODAL: IMPORTAR LLAMADAS DESDE CSV -->
+  <div id="importModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Importar Llamadas desde CSV</h2>
+        <button class="btn-close-modal" onclick="closeImportModal()">✕</button>
+      </div>
+      <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="import_calls_csv">
+
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-bottom:16px;">
+          Sube un archivo CSV exportado desde tu hoja de registro de llamadas (formato: Tipo, Teléfono, Nombre, Fecha, Hora, Tipo de Llamada, Estatus, Descripción, Duración).<br><br>
+          El sistema detectará automáticamente el <strong>estado</strong> según el código de área del teléfono, traducirá el <strong>estatus</strong> a motivo de contacto, calculará el <strong>turno del día</strong>, y omitirá filas con números inválidos.
+        </p>
+
+        <div class="form-group">
+          <label>Archivo CSV *</label>
+          <input type="file" name="csv_file" class="form-input" accept=".csv" required>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="closeImportModal()">Cancelar</button>
+          <button type="submit" class="btn-primary">Importar Llamadas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
-    Chart.defaults.color = '#8b98a8';
+    Chart.defaults.color = '#f0f4f8';
     Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
     Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 12;
+    Chart.defaults.devicePixelRatio = Math.max(window.devicePixelRatio || 1, 2);
 
     function openModal() { document.getElementById('fraudModal').style.display = 'flex'; }
     function closeModal() { document.getElementById('fraudModal').style.display = 'none'; }
     function openCallModal() { document.getElementById('callModal').style.display = 'flex'; }
     function closeCallModal() { document.getElementById('callModal').style.display = 'none'; }
+    function openImportModal() { document.getElementById('importModal').style.display = 'flex'; }
+    function closeImportModal() { document.getElementById('importModal').style.display = 'none'; }
 
     function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -1757,6 +2131,12 @@ $matrix_states = array_keys($state_type_matrix);
     }
 
     const palette = ['#c9a24d', '#dfba69', '#4fa3a0', '#e06c75', '#61afef', '#98c379', '#c678dd', '#f39c12', '#9b59b6', '#95a5a6'];
+    const donutPalette = ['#c9a24d', '#4fa3a0', '#e06c75', '#61afef', '#98c379', '#c678dd', '#f39c12', '#9b59b6', '#95a5a6', '#dfba69'];
+    const altPalette = ['#61afef', '#e06c75', '#98c379', '#c678dd', '#f39c12', '#4fa3a0', '#c9a24d', '#9b59b6', '#dfba69', '#95a5a6'];
+    if (window.ChartDataLabels) {
+      Chart.register(ChartDataLabels);
+      Chart.defaults.set('plugins.datalabels', { display: false });
+    }
 
     // Control de inicialización perezosa: cada pestaña dibuja sus gráficas
     // solo la primera vez que se abre (cuando el canvas ya es visible y
@@ -1810,32 +2190,44 @@ $matrix_states = array_keys($state_type_matrix);
       <?php if (!empty($reason_labels)): ?>
       new Chart(document.getElementById('reasonsBarChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode($reason_labels) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode($reason_counts) ?>, backgroundColor: '#c9a24d', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        data: { labels: <?= json_encode($reason_labels_bar) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode($reason_counts_bar) ?>, backgroundColor: altPalette, borderRadius: 6, barPercentage: 0.6, categoryPercentage: 0.7 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { maxRotation: 0, minRotation: 0, autoSkip: false, font: { size: 11 } } }, y: { ticks: { precision: 0 } } } }
       });
       <?php endif; ?>
 
       <?php if (!empty($duration_labels)): ?>
       new Chart(document.getElementById('reasonsDurationChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode($duration_labels) ?>, datasets: [{ label: 'Duración Promedio (Minutos)', data: <?= json_encode($duration_values) ?>, backgroundColor: 'rgba(201, 162, 77, 0.85)', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: val => val + ' min' } } } }
+        data: { labels: <?= json_encode($duration_labels_ordered) ?>, datasets: [{ label: 'Duración Promedio (Minutos)', data: <?= json_encode($duration_values_ordered) ?>, backgroundColor: altPalette, borderRadius: 6, barPercentage: 0.6, categoryPercentage: 0.7 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: val => val + ' min' } }, x: { ticks: { maxRotation: 0, minRotation: 0, autoSkip: false, font: { size: 11 } } } } }
       });
       <?php endif; ?>
 
       <?php if (!empty($calls_by_state)): ?>
       new Chart(document.getElementById('callsByStateChart'), {
         type: 'bar',
-        data: { labels: <?= json_encode(array_map(fn($r) => $r['state_name'], $calls_by_state)) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode(array_map(fn($r) => (int)$r['c'], $calls_by_state)) ?>, backgroundColor: '#4fa3a0', borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.6 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        data: { labels: <?= json_encode(array_map(fn($r) => $r['state_name'], $calls_by_state)) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode(array_map(fn($r) => (int)$r['c'], $calls_by_state)) ?>, backgroundColor: palette.concat(palette), borderRadius: 6, barPercentage: 0.7, categoryPercentage: 0.7 }] },
+        options: {
+          indexAxis: 'y',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { ticks: { autoSkip: false, font: { size: 11 } } }, x: { ticks: { precision: 0 } } }
+        }
       });
       <?php endif; ?>
 
       <?php if (!empty($reason_labels)): ?>
       new Chart(document.getElementById('reasonsPctChart'), {
         type: 'doughnut',
-        data: { labels: <?= json_encode($reason_labels) ?>, datasets: [{ data: <?= json_encode($reason_pcts) ?>, backgroundColor: palette, borderColor: '#0f151d', borderWidth: 3 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } } }
+        data: { labels: <?= json_encode($reason_labels) ?>, datasets: [{ data: <?= json_encode($reason_pcts) ?>, backgroundColor: donutPalette, borderColor: '#0f151d', borderWidth: 3 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.raw + '%' } },
+            datalabels: { display: false }
+          }
+        }
       });
       <?php endif; ?>
 
@@ -1844,6 +2236,29 @@ $matrix_states = array_keys($state_type_matrix);
         data: { labels: <?= json_encode($calls_evo_labels) ?>, datasets: [{ label: 'Llamadas', data: <?= json_encode($calls_evo_values) ?>, borderColor: '#4fa3a0', backgroundColor: 'rgba(79, 163, 160, 0.12)', fill: true, tension: 0.3 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
       });
+
+      <?php if (!empty($weekday_values) && $weekday_max > 0): ?>
+      new Chart(document.getElementById('weekdayCallsChart'), {
+        type: 'bar',
+        data: {
+          labels: <?= json_encode($weekday_labels) ?>,
+          datasets: [{
+            label: 'Llamadas',
+            data: <?= json_encode($weekday_values) ?>,
+            backgroundColor: <?= json_encode(array_map(fn($v) => $v == $weekday_max ? '#c9a24d' : ($v == $weekday_min_nonzero ? '#e06c75' : '#4fa3a0'), $weekday_values)) ?>,
+            borderRadius: 6, barPercentage: 0.4, categoryPercentage: 0.5
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ctx.raw + ' llamadas' } }
+          },
+          scales: { x: { ticks: { maxRotation: 0, minRotation: 0 } }, y: { ticks: { precision: 0 } } }
+        }
+      });
+      <?php endif; ?>
     }
 
     // ===== TAB 3: FORENSE, DEMOGRAFÍA & RANGOS =====
