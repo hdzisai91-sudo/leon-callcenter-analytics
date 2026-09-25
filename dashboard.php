@@ -783,7 +783,7 @@ $matrix_states = array_keys($state_type_matrix);
     body { margin: 0; background: var(--ink); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; min-height: 100vh; }
     .navbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
     .nav-brand { display: flex; align-items: center; gap: 14px; }
-    .nav-logo { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--gold); flex-shrink: 0; }
+    .nav-logo { width: 55px; height: 55px; border-radius: 0; object-fit: contain; border: 1.5px solid var(--gold); flex-shrink: 0; }
     .nav-brand h2 { margin: 0; font-size: 1.1rem; color: #ffffff; }
     .nav-brand span { font-size: 0.78rem; color: var(--text-muted); }
     .nav-actions { display: flex; align-items: center; gap: 16px; }
@@ -828,12 +828,25 @@ $matrix_states = array_keys($state_type_matrix);
     .charts-grid-2 { display: grid; grid-template-columns: 2fr 1.2fr; gap: 20px; margin-bottom: 24px; }
     .charts-grid-equal-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
     .charts-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 26px; }
-    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
-    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-    .chart-header h3 { margin: 0; font-size: 0.98rem; font-weight: 600; color: #ffffff; }
+    .chart-card { background: linear-gradient(180deg, #111a28 0%, var(--surface) 100%); border: 1px solid #26364b; border-top: 2px solid var(--gold); border-radius: 14px; padding: 18px 20px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.34), 0 0 18px rgba(201,162,77,0.045); position: relative; overflow: hidden; }
+    .chart-card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 44px; background: linear-gradient(180deg, rgba(201,162,77,0.055), transparent); pointer-events: none; }
+    .chart-card:hover { border-color: rgba(201,162,77,0.48); box-shadow: 0 10px 28px rgba(0,0,0,0.38), 0 0 22px rgba(201,162,77,0.08); }
+    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; position: relative; z-index: 1; gap: 12px; }
+    .chart-header h3 { margin: 0; font-size: 0.98rem; font-weight: 600; color: #ffffff; display: flex; align-items: center; gap: 8px; }
+    .chart-header h3::before { content: '▦'; color: var(--gold-hover); font-size: 0.92rem; text-shadow: 0 0 8px rgba(201,162,77,0.45); }
     .badge-tag { background: var(--card); border: 1px solid var(--border); padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; color: var(--gold-hover); }
     .badge-tag.critical { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
-    .chart-container { position: relative; height: 260px; width: 100%; }
+    .chart-container { position: relative; height: 260px; width: 100%; border-top: 1px solid rgba(255,255,255,0.055); padding-top: 8px; }
+    .chart-container canvas { transition: filter 0.25s ease, transform 0.25s ease; }
+    .chart-container canvas:hover { filter: drop-shadow(0 0 7px rgba(201,162,77,0.24)); }
+    .chart-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .chart-summary-item { min-width: 0; min-height: 58px; background: rgba(15,21,29,0.42); border: 1px solid #25344a; border-radius: 6px; padding: 9px 8px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
+    .chart-summary-item:hover { border-color: rgba(201,162,77,0.38); background: rgba(201,162,77,0.045); box-shadow: 0 0 12px rgba(201,162,77,0.06); }
+    .chart-summary-label { color: #aeb9c8; font-size: 0.66rem; text-transform: uppercase; letter-spacing: .02em; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .chart-summary-value { color: var(--text); font-size: 0.84rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .chart-summary-value.accent { color: var(--gold-hover); text-shadow: 0 0 8px rgba(201,162,77,0.2); }
+    .chart-summary-value.teal { color: #72c6c2; }
+    @media (max-width: 600px) { .chart-summary { grid-template-columns: 1fr; } }
     .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 20px; }
     .alert-box-extra { background: linear-gradient(135deg, rgba(201, 162, 77, 0.12), rgba(15, 21, 29, 0.8)); border: 1px solid var(--gold-border); border-radius: 14px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
     .alert-box-extra h4 { margin: 0 0 4px; font-size: 1rem; color: var(--gold-hover); }
@@ -876,11 +889,11 @@ $matrix_states = array_keys($state_type_matrix);
   </style>
 </head>
 <body class="dashboard-body">
-  <!-- VERSION-CHECK: dashboard-fix-lazycharts-2026-09-11 -->
+  <!-- VERSION-CHECK: dashboard-unified-chart-cards-2026-09-24 -->
 
   <header class="navbar">
     <div class="nav-brand">
-      <img src="logo.png.jpeg" alt="Logo León" class="nav-logo">
+      <img src="athena_logo.jpg" alt="Logo Athena Bitcoin" class="nav-logo">
       <div>
         <h2>León SA de CV</h2>
         <span>Sistema de Inteligencia Estadística — Call Center & Fraudes</span>
@@ -2138,11 +2151,102 @@ $matrix_states = array_keys($state_type_matrix);
       Chart.defaults.set('plugins.datalabels', { display: false });
     }
 
+    // Efecto de brillo sutil para las gráficas.
+    // No modifica datos, tooltips ni la configuración funcional de Chart.js.
+    const athenaGlowPlugin = {
+      id: 'athenaGlow',
+      beforeDatasetDraw(chart, args) {
+        const dataset = chart.data.datasets[args.index];
+        if (!dataset) return;
+
+        const active = chart.getActiveElements();
+        const hovered = active.some(el => el.datasetIndex === args.index);
+        const background = dataset.backgroundColor;
+        const border = dataset.borderColor;
+        let glowColor = Array.isArray(background) ? background[0] : background;
+        if (typeof glowColor !== 'string') {
+          glowColor = Array.isArray(border) ? border[0] : border;
+        }
+        if (typeof glowColor !== 'string') glowColor = '#c9a24d';
+
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = hovered ? 24 : 10;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      },
+      afterDatasetDraw(chart) {
+        chart.ctx.restore();
+      }
+    };
+    Chart.register(athenaGlowPlugin);
+
     // Control de inicialización perezosa: cada pestaña dibuja sus gráficas
     // solo la primera vez que se abre (cuando el canvas ya es visible y
     // tiene tamaño real). Esto evita un error interno de Chart.js que
     // ocurre al crear gráficas de barras dentro de contenedores ocultos.
     const chartsInitialized = { general: false, callcenter: false, fraud: false, geo: false, modalidades: false, resumenfraude: false };
+
+    function formatChartMetric(value) {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+      return Number.isInteger(value) ? value.toLocaleString('es-SV') : value.toLocaleString('es-SV', { maximumFractionDigits: 1 });
+    }
+
+    function refreshChartCardMetrics(tabName) {
+      const tab = document.getElementById('tab-' + tabName);
+      if (!tab) return;
+      tab.querySelectorAll('.chart-card').forEach(card => {
+        const canvas = card.querySelector('canvas');
+        if (!canvas) return;
+        const chart = Chart.getChart(canvas);
+        if (!chart || !chart.data || !chart.data.datasets || !chart.data.datasets.length) return;
+
+        let values = [];
+        chart.data.datasets.forEach(ds => {
+          (ds.data || []).forEach(v => {
+            const n = typeof v === 'number' ? v : Number(v);
+            if (Number.isFinite(n)) values.push(n);
+          });
+        });
+        if (!values.length) return;
+
+        const total = values.reduce((a,b) => a + b, 0);
+        const max = Math.max(...values);
+        const min = Math.min(...values);
+        const maxIndex = values.indexOf(max);
+        const labels = chart.data.labels || [];
+        const peak = labels[maxIndex] != null ? String(labels[maxIndex]) : 'Mayor valor';
+        const isDonut = chart.config.type === 'doughnut' || chart.config.type === 'pie';
+
+        let items;
+        if (isDonut) {
+          items = [
+            ['TOTAL', formatChartMetric(total)],
+            ['MAYOR VALOR', formatChartMetric(max)],
+            ['CATEGORÍA PRINCIPAL', peak]
+          ];
+        } else {
+          items = [
+            ['TOTAL', formatChartMetric(total)],
+            ['VALOR MÁXIMO', formatChartMetric(max)],
+            ['PUNTO DESTACADO', peak]
+          ];
+        }
+
+        let footer = card.querySelector('.chart-summary');
+        if (!footer) {
+          footer = document.createElement('div');
+          footer.className = 'chart-summary';
+          card.appendChild(footer);
+        }
+        footer.innerHTML = items.map((item, i) => `
+          <div class="chart-summary-item">
+            <span class="chart-summary-label">${item[0]}</span>
+            <span class="chart-summary-value ${i === 0 ? 'accent' : ''}">${item[1]}</span>
+          </div>`).join('');
+      });
+    }
 
     function initChartsForTab(tabName) {
       if (chartsInitialized[tabName]) return;
@@ -2153,6 +2257,7 @@ $matrix_states = array_keys($state_type_matrix);
       else if (tabName === 'geo') initGeoCharts();
       else if (tabName === 'modalidades') initModalidadesCharts();
       else if (tabName === 'resumenfraude') initResumenFraudeCharts();
+      requestAnimationFrame(() => refreshChartCardMetrics(tabName));
     }
 
     // ===== TAB 1: RESUMEN GENERAL =====
@@ -2361,6 +2466,10 @@ $matrix_states = array_keys($state_type_matrix);
     // La pestaña "Resumen General" está visible desde que carga la página,
     // así que sus gráficas se inicializan de inmediato.
     initChartsForTab('general');
-  </script>
+      window.addEventListener('resize', () => {
+      document.querySelectorAll('.tab-content.active').forEach(tab => refreshChartCardMetrics(tab.id.replace('tab-', '')));
+    });
+
+</script>
 </body>
 </html>
